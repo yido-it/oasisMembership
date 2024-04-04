@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<!-- 
+ * 테이블명 : DR_BK_TIME_VOUCHER 
+ * 테이블 설명 : 예약타입별 이용권 설정
+-->
+<mapper namespace="com.yido.clubd.repository.DrBkTimeVoucherMapper">
+
+	<select id="getBayList" resultType="hashMap">
+		       
+		SELECT DISTINCT(B.CD_TITLE1) AS bayName
+		  FROM DR_BK_TIME_VOUCHER A
+		       LEFT OUTER JOIN CD_COMMON B
+		                    ON A.CO_DIV = B.CO_DIV
+		                   AND B.CD_DIVISION = '020'
+		                   AND A.BAY_CONDI = B.CD_CODE
+		 WHERE BK_DAY >= DATE_FORMAT(now(), '%Y%m%d')
+		   AND VC_CD =  #{vcCd}
+    </select>
+    
+</mapper>

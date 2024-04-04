@@ -1,0 +1,233 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<!-- 
+ * 테이블명 : DR_VOUCHER_SALE
+ * 테이블 설명 : 회원이용권 구매내역
+-->
+<mapper namespace="com.yido.clubd.repository.DrVoucherSaleMapper">
+
+	<select id="getSerialNo" resultType="String">
+		SELECT DR_NEXTVAL('001', 'D', 'DR_SERIAL_NO')
+	</select>
+	
+	<select id="getSaleSeq" resultType="int">
+		SELECT IFNULL(CAST(MAX(SALE_SEQ) AS UNSIGNED), 0)+1 
+		  FROM DR_VOUCHER_SALE
+	</select>
+	
+    <!-- 이용권 구매내역 -->
+    <select id="selectSaleList" parameterType="hashmap" resultType="hashmap">
+		SELECT B.VC_NAME 
+			 , A.VC_TO_DAY
+		     , A.VC_LIMIT_CNT
+		     , A.VC_USE_CNT
+		     , A.VC_REM_CNT
+		     , A.SALE_DAY
+		     , A.SALE_SEQ
+		     , A.VC_CD
+		     , A.VC_AMOUNT
+		     , A.VC_STATE
+		     , A.MS_NUM
+		     , A.DR_SERIAL_NO
+		     , CD_TITLE1 AS VC_STATE_NM
+		FROM DR_VOUCHER_SALE A 
+				INNER JOIN DR_VOUCHER_CODE B ON A.VC_CD = B.VC_CD
+				INNER JOIN CD_COMMON C ON A.VC_STATE = C.CD_CODE AND C.CD_DIVISION = '019' AND C.CD_USEYN = 'Y'
+		WHERE 1=1 
+		<if test='coDiv != null and coDiv != ""'>
+		  AND A.CO_DIV = #{coDiv}
+		</if> 
+		<if test='msNum != null and msNum != ""'>
+		  AND A.MS_NUM = #{msNum}
+		</if> 
+		<if test='srchPeriod != null and srchPeriod != "" and strtDt != null and endDt != null'>
+		 AND A.SALE_DAY BETWEEN #{strtDt} AND #{endDt}
+		</if>
+		<choose> 
+			<when test='srchUseYn != null and srchUseYn == "Y"'>
+				<!-- 사용완료 -->
+			 	AND (A.VC_REM_CNT = 0 AND A.VC_STATE = 1)
+			</when> 
+			<when test='srchUseYn != null and srchUseYn == "N"'>
+				<!-- 사용중 -->
+			  	AND (A.VC_REM_CNT > 0 AND A.VC_STATE = 1)
+			</when> 
+			<otherwise></otherwise>
+		</choose> 
+		  AND A.USE_YN = 'Y'
+        ORDER BY A.VC_TO_DAY, A.VC_REM_CNT, A.SALE_SEQ
+		<if test='limit != null and offset != null'>
+        LIMIT #{limit} OFFSET #{offset}
+		</if>        
+    </select>
+	
+    <!-- 최근 이용권 구매내역 -->
+    <select id="getLastSale" parameterType="hashmap" resultType="hashmap">
+		SELECT B.VC_NAME 
+			 , A.VC_TO_DAY
+		     , A.VC_LIMIT_CNT
+		     , A.VC_REM_CNT
+		     , A.SALE_DAY
+		     , A.SALE_SEQ
+		     , A.VC_CD
+		     , A.VC_AMOUNT
+		     , C.CO_NAME
+		     , C.CO_DIV
+		     , B.VC_MONTH
+		FROM DR_VOUCHER_SALE A 
+				INNER JOIN DR_VOUCHER_CODE B ON A.VC_CD = B.VC_CD
+				INNER JOIN CO_PLACE C ON A.CO_DIV = C.CO_DIV AND C.USE_YN = 'Y'
+		WHERE 1=1 
+		<if test='coDiv != null and coDiv != ""'>
+		  AND A.CO_DIV = #{coDiv}
+		</if> 
+		<if test='msNum != null and msNum != ""'>
+		  AND A.MS_NUM = #{msNum}
+		</if> 
+		  AND A.USE_YN = 'Y'
+		ORDER BY SALE_DAY DESC, SALE_SEQ DESC
+		LIMIT 1
+    </select>
+    
+	<!-- 이용권 구매내역 (예약페이지에서 필요한 정보) -->
+    <select id="selectList" parameterType="hashmap" resultType="hashmap">
+    
+	    SELECT A.CO_DIV
+	 		 , SALE_SEQ
+	 		 , A.SALE_DAY
+	    	 , VC_NAME
+			 , VC_MONTH 
+		     , A.VC_LIMIT_CNT
+		     , A.VC_REM_CNT
+			 , DATE_FORMAT(A.VC_TO_DAY, "%Y.%m.%d") AS VC_TO_DAY
+			 , FLOOR(A.VC_AMOUNT / A.VC_LIMIT_CNT) AS AMOUNT
+			 , B.VC_SALE
+             , B.VC_DAY_LIMIT_CNT
+             , A.VC_CD
+		FROM DR_VOUCHER_SALE A 
+								INNER JOIN DR_VOUCHER_CODE B ON A.VC_CD = B.VC_CD
+							    INNER JOIN ( 
+									SELECT E.CO_DIV, E.BK_DAY, E.BAY_CONDI, E.VC_CO_DIV, E.VC_CD
+							        FROM DR_BK_TIME_VOUCHER E
+							        WHERE E.BK_DAY = #{bkDay}
+							        GROUP BY E.CO_DIV, E.BK_DAY, E.BAY_CONDI, E.VC_CO_DIV, E.VC_CD
+							    )  C ON B.CO_DIV = C.VC_CO_DIV AND B.VC_CD = C.VC_CD 
+		WHERE 1=1 
+		<if test='coDiv != null and coDiv != ""'>
+		  AND C.CO_DIV = #{coDiv}
+		</if> 
+		<if test='bayCondi != null and bayCondi != ""'>
+		  AND C.BAY_CONDI = #{bayCondi}
+		</if> 
+		<if test='bkTime != null and bkTime != ""'>
+		  AND C.BK_TIME = #{bkTime}
+		</if> 
+		<if test='msNum != null and msNum != ""'>
+		  AND A.MS_NUM = #{msNum}
+		</if> 
+		  AND (A.VC_REM_CNT > 0 AND A.VC_STATE = 1)
+		  AND A.USE_YN = 'Y'
+        ORDER BY A.VC_TO_DAY, A.VC_REM_CNT, A.SALE_SEQ
+    </select>
+    
+    <select id="getVoucherSale" resultType="DrVoucherSale">
+	    SELECT *
+		  FROM DR_VOUCHER_SALE 
+		 WHERE 1=1 
+		<if test='coDiv != null and coDiv != ""'>
+		  AND CO_DIV = #{coDiv}
+		</if> 
+		<if test='saleDay != null and saleDay != ""'>
+		  AND SALE_DAY = #{saleDay}
+		</if> 
+		<if test='saleSeq != null and saleSeq != ""'>
+		  AND SALE_SEQ = #{saleSeq}
+		</if> 
+    </select>
+    
+    <!-- 보유 이용권 최종일자 산출 -->
+    <select id="getVcToDay" parameterType="hashmap" resultType="String">		
+		SELECT MAX(VC_TO_DAY) AS VC_TO_DAY
+		  FROM DR_VOUCHER_SALE A
+		       	INNER JOIN DR_VOUCHER_CODE B ON A.CO_DIV = B.CO_DIV	AND A.VC_CD = B.VC_CD AND B.VC_DIVISION IN ('000', '002')
+		 WHERE A.CO_DIV = #{coDiv}
+		   AND A.MS_NUM = #{msNum}
+		   AND A.VC_STATE IN ('01','02')
+    </select>
+    
+    <!-- 이용권 구매시 (DR_MS_CO_INFO > MS_VOUCHER_DAY 업데이트 처리) -->
+	<update id="updateVoucherDay">
+		UPDATE DR_MS_CO_INFO
+		   SET MS_VOUCHER_DAY = #{voucherDay}
+		 WHERE CO_DIV 		  = #{coDiv}
+		   AND MS_NUM 		  = #{msNum}
+	</update> 
+	
+    <insert id="insertDrVoucherSale">
+    	INSERT INTO DR_VOUCHER_SALE (
+			CO_DIV
+			, SALE_DAY
+			, SALE_SEQ
+			, MS_NUM
+			, VC_CD
+			, DR_SERIAL_NO
+			, VC_FROM_DAY
+			, VC_TO_DAY
+			, VC_LIMIT_CNT
+			, VC_SERVICE_CNT
+			, VC_REM_CNT
+			, VC_AMOUNT
+			, VC_NET
+			, VC_VAT
+			, INPUT_STAFF
+			, INPUT_DATETIME
+			, INPUT_IP
+    	) values (
+    		#{coDiv}			
+    		, #{saleDay}		
+    		, #{saleSeq}			
+    		, #{msNum}
+    		, #{vcCd}	
+    		, #{drSerialNo}		
+    		, #{vcFromDay}		
+    		, #{vcToDay}			
+    		, #{vcLimitCnt}		
+    		, #{vcServiceCnt}		
+    		, #{vcRemCnt}	
+    		, #{vcAmount}	
+    		, #{vcNet}	
+    		, #{vcVat}	
+    		,'APP'		
+    		, now()
+			, #{inputIp}						
+    	)  	
+    </insert>
+    
+    <!-- 잔존수량 변경 -->
+	<update id="updateVcRemCnt">
+		UPDATE DR_VOUCHER_SALE
+		   SET 
+		<if test='gubun != null and gubun == "M"'>
+			VC_REM_CNT 		= VC_REM_CNT - #{vcRemCnt} 
+			, VC_USE_CNT 	= VC_USE_CNT + #{vcRemCnt} 
+		</if> 
+		<if test='gubun != null and gubun == "P"'>
+			 VC_REM_CNT 	= VC_REM_CNT + #{vcRemCnt} 
+			, VC_USE_CNT 	= VC_USE_CNT - #{vcRemCnt} 
+		</if> 
+		 WHERE CO_DIV 			= #{coDiv}
+		   AND SALE_DAY 		= #{saleDay}
+		   AND SALE_SEQ 		= #{saleSeq}
+	</update> 
+	
+	<!-- 상태변경 -->
+	<update id="updateState">
+		UPDATE DR_VOUCHER_SALE
+		   SET VC_STATE 	= #{vcState} 
+		<if test='useYn != null and useYn != ""'>
+		   ,   USE_YN 		= #{useYn} 
+		</if> 
+		 WHERE SALE_SEQ 	= #{saleSeq}
+	</update>   
+</mapper>

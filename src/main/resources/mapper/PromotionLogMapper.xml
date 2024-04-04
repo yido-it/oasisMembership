@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<!-- 
+ * 테이블명 : DR_PROMOTION_MARK_LOG
+ * 테이블 설명 : 프로모션 로그  
+-->
+<mapper namespace="com.yido.clubd.repository.PromotionLogMapper">
+
+	<!-- 프로모션 선점 로그 (DR_PROMOTION_MARK_LOG) insert -->
+   <insert id="insertPrmMarkLog">
+        <selectKey resultType="Integer" keyProperty="logSeq" order="BEFORE">
+			SELECT IFNULL(CAST(MAX(LOG_SEQ) AS UNSIGNED), 0)+1 
+			  FROM DR_PROMOTION_MARK_LOG
+        </selectKey>       	
+    	INSERT INTO DR_PROMOTION_MARK_LOG (
+			 CO_DIV 
+			 , LOG_SEQ 
+			 , LOG_DIV 
+			 , PM_DIVISION 
+			 , PM_SERIAL_NO 
+			 , MARK_SEQ 
+			 , MARK_STATE 
+			 , ENTRY_USER 
+			 , ENTRY_IP 
+			 , ENTRY_DATETIME 
+			 , MS_NUM 
+			 , LIST_SEQ 
+			 , INPUT_STAFF 
+			 , INPUT_DATETIME 
+			 , INPUT_IP 
+    	) values (	
+    		#{coDiv}		
+    		, #{logSeq}
+    		, #{logDiv}		
+    		, #{pmDivision}	
+    		, #{pmSerialNo}	
+    		, #{markSeq}		
+    		, #{markState}		
+    		, #{entryUser}	
+    		, #{entryIp}		
+    		, #{entryDatetime}	
+    		, #{msNum}	
+			, #{listSeq}	
+			, 'APP'		
+			, now()
+			, #{inputIp}		
+    	)  	    	
+    </insert>
+    
+       
+	<!-- 프로모션 접수내역 로그 insert -->
+    <insert id="insPrmListLog">
+        <selectKey resultType="Integer" keyProperty="logSeq" order="BEFORE">
+			SELECT IFNULL(CAST(MAX(LOG_SEQ) AS UNSIGNED), 0)+1 
+			  FROM DR_PROMOTION_LIST_LOG
+        </selectKey>    
+    	INSERT INTO DR_PROMOTION_LIST_LOG (			
+			CO_DIV
+			, LOG_SEQ
+			, LOG_DIV
+			, PM_DIVISION
+			, PM_SERIAL_NO
+			, MS_NUM
+			, LIST_SEQ
+			, CUSTOMER_NOTICE	
+			, INPUT_STAFF
+			, INPUT_DATETIME
+			, INPUT_IP		
+			, USE_NAME
+			, REM_COUNT
+    	) values (
+    		#{coDiv}		
+    		, #{logSeq}
+    		, #{logDiv}		
+    		, #{pmDivision}	
+    		, #{pmSerialNo}	
+    		, #{msNum}		
+    		, #{listSeq}		
+    		, #{customerNotice}	  
+    		, 'APP'		
+    		, now()
+			, #{inputIp}	
+			, #{useName}	
+			, #{remCount}		  		
+    	)  	
+    </insert>
+</mapper>

@@ -1,0 +1,67 @@
+{"properties": [
+  {
+    "name": "file.root",
+    "type": "java.lang.String",
+    "description": "A description for 'file.root'"
+  },
+  {
+    "name": "Globals.Naver.Callback.Url",
+    "type": "java.lang.String",
+    "description": "A description for 'Globals.Naver.Callback.Url'"
+  },
+  {
+    "name": "amazons2.secretKey",
+    "type": "java.lang.String",
+    "description": "A description for 'amazons2.secretKey'"
+  },
+  {
+    "name": "amazons2.accessKey",
+    "type": "java.lang.String",
+    "description": "A description for 'amazons2.accessKey'"
+  },
+  {
+    "name": "amazons3.endPoint",
+    "type": "java.lang.String",
+    "description": "A description for 'amazons3.endPoint'"
+  },
+  {
+    "name": "amazons3.bucketName",
+    "type": "java.lang.String",
+    "description": "A description for 'amazons3.bucketName'"
+  },
+  {
+    "name": "Globals.Naver.Key",
+    "type": "java.lang.String",
+    "description": "A description for 'Globals.Naver.Key'"
+  },
+  {
+    "name": "amazons2.accessKey",
+    "type": "java.lang.String",
+    "description": "A description for 'amazons2.accessKey'"
+  },
+  {
+    "name": "amazons2.accessKey",
+    "type": "java.lang.String",
+    "description": "A description for 'amazons2.accessKey'"
+  },
+  {
+    "name": "amazons2.accessKey",
+    "type": "java.lang.String",
+    "description": "A description for 'amazons2.accessKey'"
+  },
+  {
+    "name": "Globals.Naver.Domain",
+    "type": "java.lang.String",
+    "description": "A description for 'Globals.Naver.Domain'"
+  },
+  {
+    "name": "Globals.Kakao.Key",
+    "type": "java.lang.String",
+    "description": "A description for 'Globals.Kakao.Key'"
+  },
+  {
+    "name": "Globals.Kakao.Redirect.Url",
+    "type": "java.lang.String",
+    "description": "A description for 'Globals.Kakao.Redirect.Url'"
+  }
+]}

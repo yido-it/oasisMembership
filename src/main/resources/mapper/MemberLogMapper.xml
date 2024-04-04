@@ -1,0 +1,274 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<!-- 
+ * 테이블명 : DR_MS_MAININFO 
+ * 테이블 설명 : 회원정보 (회원) 
+-->
+<mapper namespace="com.yido.clubd.repository.MemberLogMapper">
+	<select id="selectMember" resultType="MemberVO">
+	/* memberLogMapper.selectMember - MS_NUM으로 회원정보 조회 */
+		SELECT
+		  	  MS_NUM
+			, MS_STATUS
+			, MS_BK_GRANT
+			, MS_DIVISION
+			, MS_LEVEL
+			, MS_LOGIN_CD
+			, MS_LINK
+			, MS_ID
+			, MS_PASSWORD
+			, MS_NAME
+			, MS_ENAME
+			, MS_NICKNAME
+			, MS_IMAGENAME
+			, MS_SEX
+			, MS_BIRTH
+			, MS_BIRTHYL
+			, MS_FIRST_PHONE1
+			, AES_DECRYPT(UNHEX(MS_MID_PHONE1), 'YIDO') AS MS_MID_PHONE1
+			, MS_LAST_PHONE1
+			, SMS_CHK1
+			, MS_BLANK
+			, MS_VOUCHER_DAY
+			, MS_WEDDINGDAY
+			, MS_WEDDING
+			, AES_DECRYPT(UNHEX(MS_EMAIL), 'YIDO') AS MS_EMAIL
+			, MS_EMAIL_YN
+			, AES_DECRYPT(UNHEX(MS_HOMETEL), 'YIDO') AS MS_HOMETEL
+			, MS_HOMEZIP
+			, MS_HOMEADDR1
+			, MS_HOMEADDR2
+			, MS_POST_YN
+			, MS_COMPNM
+			, MS_COMPNO
+			, AES_DECRYPT(UNHEX(MS_COMPTEL), 'YIDO') AS MS_COMPTEL
+			, AES_DECRYPT(UNHEX(MS_COMPFAX), 'YIDO') AS MS_COMPFAX
+			, MS_COMPZIP
+			, MS_COMPADDR1
+			, MS_COMPADDR2
+			, MS_COMP_POST_YN
+			, MS_COMPDEPT
+			, MS_COMPPOSITION
+			, MS_REGDAY
+			, MS_ENDDAY
+			, MS_REMARK
+			, MS_MKT_AGREE_YN
+			, MS_DORMANT
+			, LOGIN_TIME
+			, MS_DI
+			, MS_JOB_CD
+			, MS_AREA1
+			, MS_AREA2
+			, MS_PUSH_KEY
+			, MS_ORDER
+			, INPUT_STAFF
+			, INPUT_DATETIME
+			, INPUT_IP
+			, UPDATE_STAFF
+			, UPDATE_DATETIME
+			, UPDATE_IP
+		FROM DR_MS_MAININFO
+		WHERE 1=1 
+			AND MS_NUM  = #{msNum}
+    </select>
+
+	<insert id="insertDrMsMaininfoLog" parameterType="MemberVO">
+		/* memberLogMapper.insertDrMsMaininfoLog */
+		<selectKey resultType="Integer" keyProperty="logSeq" order="BEFORE">
+			SELECT IFNULL(CAST(MAX(LOG_SEQ) AS UNSIGNED), 0)+1 as logSeq
+			  FROM DR_MS_MAININFO_LOG
+			WHERE MS_NUM = #{msNum}
+        </selectKey>  
+		INSERT INTO DR_MS_MAININFO_LOG (
+		  	  MS_NUM
+		  	, LOG_SEQ
+		  	, LOG_DIV
+			, MS_STATUS
+			, MS_BK_GRANT
+			, MS_DIVISION
+			, MS_LEVEL
+			, MS_LOGIN_CD
+			, MS_LINK
+			, MS_ID
+			, MS_PASSWORD
+			, MS_NAME
+			, MS_ENAME
+			, MS_NICKNAME
+			, MS_IMAGENAME
+			, MS_SEX
+			, MS_BIRTH
+			, MS_BIRTHYL
+			, MS_FIRST_PHONE1
+			, MS_MID_PHONE1
+			, MS_LAST_PHONE1
+			, SMS_CHK1
+			, MS_BLANK
+			, MS_VOUCHER_DAY
+			, MS_WEDDINGDAY
+			, MS_WEDDING
+			, MS_EMAIL
+			, MS_EMAIL_YN
+			, MS_HOMETEL
+			, MS_HOMEZIP
+			, MS_HOMEADDR1
+			, MS_HOMEADDR2
+			, MS_POST_YN
+			, MS_COMPNM
+			, MS_COMPNO
+			, MS_COMPTEL
+			, MS_COMPFAX
+			, MS_COMPZIP
+			, MS_COMPADDR1
+			, MS_COMPADDR2
+			, MS_COMP_POST_YN
+			, MS_COMPDEPT
+			, MS_COMPPOSITION
+			, MS_REGDAY
+			, MS_ENDDAY
+			, MS_REMARK
+			, MS_MKT_AGREE_YN
+			, MS_DORMANT
+			, LOGIN_TIME
+			, MS_DI
+			, MS_JOB_CD
+			, MS_AREA1
+			, MS_AREA2
+			, MS_PUSH_KEY
+			, INPUT_STAFF
+			, INPUT_DATETIME
+			, INPUT_IP
+			, UPDATE_STAFF
+			, UPDATE_DATETIME
+			, UPDATE_IP
+		) VALUES (
+			  #{msNum}
+			, #{logSeq}
+			, #{logDiv}
+			, #{msStatus}
+			, #{msBkGrant}
+			, #{msDivision}
+			, #{msLevel}
+			, #{msLoginCd}
+			, #{msLink}
+			, #{msId}
+			, SHA2(#{msPassword}, 256)
+			, #{msName}
+			, #{msEname}
+			, #{msNickname}
+			, #{msImagename}
+			, #{msSex}
+			, #{msBirth}
+			, #{msBirthyl}
+			, #{msFirstPhone1}
+			, HEX(AES_ENCRYPT(#{msMidPhone1}, 'YIDO'))
+			, #{msLastPhone1}
+			, #{smsChk1}
+			, #{msBlank}
+			, #{msVoucherDay}
+			, #{msWeddingday}
+			, #{msWedding}
+			, HEX(AES_ENCRYPT(#{msEmail}, 'YIDO'))	
+			, #{msEmailYn}
+			, #{msHometel}
+			, #{msHomezip}
+			, #{msHomeaddr1}
+			, #{msHomeaddr2}
+			, #{msPostYn}
+			, #{msCompnm}
+			, #{msCompno}
+			, #{msComptel}
+			, #{msCompfax}
+			, #{msCompzip}
+			, #{msCompaddr1}
+			, #{msCompaddr2}
+			, #{msCompPostYn}
+			, #{msCompdept}
+			, #{msCompposition}
+			, #{msRegday}
+			, #{msEndday}
+			, #{msRemark}
+			, #{msMktAgreeYn}
+			, #{msDormant}
+			, #{loginTime}
+			, #{msDi}
+			, #{msJobCd}
+			, #{msArea1}
+			, #{msArea2}
+			, #{msPushKey}
+			, #{inputStaff}
+			, #{inputDatetime}
+			, #{inputIp}
+			, #{updateStaff}
+			, #{updateDatetime}
+			, #{updateIp}
+		)
+    </insert>
+	<insert id="insertDrMsBasicLog">
+	/* memberLogMapper.insertDrMsBasicLog */
+		<selectKey resultType="Integer" keyProperty="logSeq" order="BEFORE">
+			SELECT IFNULL(CAST(MAX(LOG_SEQ) AS UNSIGNED), 0)+1 as logSeq
+			  FROM DR_MS_BASIC_LOG
+			WHERE MS_NUM = #{msNum}
+        </selectKey>  
+		INSERT INTO DR_MS_BASIC_LOG (
+		  	  MS_NUM
+			, LOG_SEQ
+			, LOG_DIV
+			, MS_HANDCAP
+			, MS_LESSON_EXP_YN
+			, MS_LESSON_MINUTE
+			, MS_LESSON_TREM
+			, MS_LESSON_UNIT
+			, MS_ROUND_CNT
+			, MS_ROUND_UNIT
+			, INPUT_STAFF
+			, INPUT_DATETIME
+			, INPUT_IP
+		) VALUES (
+			  #{msNum}
+			, #{logSeq}
+			, #{logDiv}
+			, #{msHandcap}
+			, #{msLessonExpYn}
+			, #{msLessonMinute}
+			, #{msLessonTrem}
+			, #{msLessonUnit}
+			, #{msRoundCnt}
+			, #{msRoundUnit}
+			, #{inputStaff}
+			, #{inputDatetime}
+			, #{inputIp}
+		)
+    </insert>
+	<insert id="insertDrMsCarLog">
+	/* memberLogMapper.insertDrMsCarLog */
+		<selectKey resultType="Integer" keyProperty="logSeq" order="BEFORE">
+			SELECT IFNULL(CAST(MAX(LOG_SEQ) AS UNSIGNED), 0)+1 as logSeq
+			  FROM DR_MS_CAR_LOG
+			WHERE MS_NUM = #{msNum}
+        </selectKey>  
+		INSERT INTO DR_MS_CAR_LOG (
+		  	 MS_NUM
+			, CAR_SEQ
+			, LOG_SEQ
+			, LOG_DIV
+			, MS_CAR_NO
+			, MS_CAR_KIND
+			, INPUT_STAFF
+			, INPUT_DATETIME
+			, INPUT_IP
+		) VALUES (
+			  #{msNum}
+			, #{carSeq}
+			, #{logSeq}
+			, #{logDiv}
+			, #{msCarNo}
+			, #{msCarKind}
+			, #{inputStaff}
+			, #{inputDatetime}
+			, #{inputIp}
+		)
+    </insert>
+  
+</mapper>

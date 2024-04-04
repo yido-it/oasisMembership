@@ -1,0 +1,174 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.yido.clubd.common.repository.CommonMapper">
+
+	<select id="getCommonCode" resultType="CdCommon">
+		SELECT CO_DIV
+			 , CD_DIVISION
+			 , CD_CODE
+			 , CD_TITLE1
+			 , CD_TITLE2
+			 , CD_TITLE3
+			 , CD_TITLE4
+			 , CD_LENGTH
+		  FROM CD_COMMON
+		 WHERE CD_USEYN = 'Y'
+		<if test='coDiv != null and coDiv != ""'>
+		  AND CO_DIV = #{coDiv}
+		</if> 	  
+		<if test='cdDivision != null and cdDivision != ""'>
+		  AND CD_DIVISION = #{cdDivision}
+		</if> 	 
+		<if test='cdCode != null and cdCode != ""'>
+		  AND CD_CODE = #{cdCode}
+		</if> 			   
+	</select>
+	
+	<select id="getCommonCodeList" resultType="CdCommon">
+		SELECT CO_DIV
+			 , CD_DIVISION
+			 , CD_CODE
+			 , CD_TITLE1
+			 , CD_TITLE2
+			 , CD_TITLE3
+			 , CD_TITLE4
+			 , CD_LENGTH
+		  FROM CD_COMMON
+		 WHERE CD_USEYN = 'Y'
+		<if test='coDiv != null and coDiv != ""'>
+		  AND CO_DIV = #{coDiv}
+		</if> 	  
+		<if test='cdDivision != null and cdDivision != ""'>
+		  AND CD_DIVISION = #{cdDivision}
+		</if> 	 
+		<if test='cdCode != null and cdCode != ""'>
+		  AND CD_CODE = #{cdCode}
+		</if>
+		<if test='cdType != null and cdType != ""'>
+		  AND CD_TYPE = #{cdType}
+		</if> 	 			   
+		ORDER BY CD_SORT
+	</select>
+	
+	<select id="getCommonCodeDetailList" resultType="CdCommon">
+		SELECT CO_DIV
+			 , CD_DIVISION
+			 , CD_CODE
+			 , CD_TITLE1
+			 , CD_TITLE2
+			 , CD_TITLE3
+			 , CD_TITLE4
+			 , CD_LENGTH
+		  FROM CD_COMMON
+		 WHERE CD_USEYN = 'Y'
+		<if test='coDiv != null and coDiv != ""'>
+		  AND CO_DIV = #{coDiv}
+		</if> 	  
+		<if test='cdDivision != null and cdDivision != ""'>
+		  AND CD_DIVISION = #{cdDivision}
+		</if> 	 
+		<if test='cdCode != null and cdCode != ""'>
+		  AND LEFT(CD_CODE, 2) = #{cdCode}
+		</if> 			   
+	</select>
+	
+	<select id="getMsArea2List" resultType="CdCommon">
+		SELECT CO_DIV
+			 , CD_DIVISION
+			 , CD_CODE
+			 , CD_TITLE1
+			 , CD_TITLE2
+			 , CD_TITLE3
+			 , CD_TITLE4
+			 , CD_LENGTH
+		  FROM CD_COMMON
+		 WHERE CD_USEYN = 'Y'
+		<if test='coDiv != null and coDiv != ""'>
+		  AND CO_DIV = #{coDiv}
+		</if> 	  
+		<if test='cdDivision != null and cdDivision != ""'>
+		  AND CD_DIVISION = #{cdDivision}
+		</if> 	 
+		<if test='cdCode != null and cdCode != ""'>
+		  AND CD_CODE = #{cdCode}
+		</if> 			   
+	</select>
+
+	<select id="sendSms" statementType="CALLABLE" parameterType="hashmap">
+		{ CALL SP_LOUNGE_SMS_SEND (
+			#{coDiv}
+			<if test="tplCd == null">, ''</if>
+			<if test="tplCd != null">, #{tplCd}</if>
+			, #{msPhone}
+			<if test="sendMsg == null">, (SELECT CONTENT FROM SMS_TEMPLATE WHERE CO_DIV = #{coDiv} AND TPL_CODE = #{tplCd})</if>
+			<if test="sendMsg != null">, #{sendMsg}</if>
+			<if test="bkDay == null">, ''</if>
+			<if test="bkDay != null">, #{bkDay}</if>
+			<if test="bkTime == null">, ''</if>
+			<if test="bkTime != null">, #{bkTime}</if>
+			<if test="msName == null">, ''</if>
+			<if test="msName != null">, #{msName}</if>
+			<if test="msId == null">, ''</if>
+			<if test="msId != null">, #{msId}</if>
+			<if test="msPassword == null">, ''</if>
+			<if test="msPassword != null">, #{msPassword}</if>
+			<if test="bayName == null">, ''</if>
+			<if test="bayName != null">, #{bayName}</if>
+			<if test="breachDay == null">, ''</if>
+			<if test="breachDay != null">, #{breachDay}</if>
+			<if test="monthCnt == null">, null</if>
+			<if test="monthCnt != null">, #{monthCnt}</if>
+			, 'HOMEPAGE'
+			) }
+	</select>
+
+	<update id="actionAgree" parameterType="hashmap">
+		UPDATE MS_MAININFO_DETAIL
+		   SET MS_ID_AGREE_YN = 'Y'
+		 WHERE MS_NUM = #{msNum}
+	</update>
+
+	<update id="savePushKey" parameterType="hashmap">
+		UPDATE MS_MAININFO_DETAIL
+		   SET MS_PUSH_KEY = #{pushKey}
+		 WHERE MS_NUM = #{msNum}
+	</update>
+
+	<insert id="loginLog" parameterType="hashmap">
+		<selectKey resultType="Integer" keyProperty="loginSeq" order="BEFORE">
+			   SELECT IFNULL(MAX(LOGIN_SEQ), 0) + 1 as loginSeq
+			   FROM MS_MAININFO_LOGIN
+			  WHERE MS_NUM = #{msNum}
+			    AND LOGIN_DATE = DATE_FORMAT(NOW(), '%Y%m%d')
+	  	</selectKey>
+		INSERT INTO MS_MAININFO_LOGIN(
+			MS_NUM
+		  , LOGIN_DATE
+		  , LOGIN_SEQ
+		  , LOGIN_PLATFORM
+		  , USER_AGENT
+		  , LOGIN_AUTO
+		  , INPUT_STAFF
+		  , INPUT_DATETIME
+		  , INPUT_IP
+
+		) SELECT
+			#{msNum}
+		  , DATE_FORMAT(NOW(), '%Y%m%d')
+		  , #{loginSeq}
+		  , #{platform}
+		  , #{userAgent}
+		  , #{loginAuto}
+		  , #{inputStaff}
+		  , NOW()
+		  , #{ipAddr}
+		FROM DUAL
+	   WHERE 1 > (
+	   		 SELECT COUNT(MS_NUM) FROM MS_MAININFO_LOGIN
+	   		 WHERE MS_NUM = #{msNum}
+			   AND LOGIN_DATE = DATE_FORMAT(NOW(), '%Y%m%d')
+			   AND INPUT_DATETIME
+		   BETWEEN DATE_ADD(NOW(), INTERVAL -1 MINUTE) AND NOW()
+		   )
+	</insert>
+</mapper>

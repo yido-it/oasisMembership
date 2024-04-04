@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<!-- 
+ * 테이블명 : DR_MS_MAININFO 
+ * 테이블 설명 : 회원정보 (회원) 
+-->
+<mapper namespace="com.yido.clubd.repository.MembershipMapper">
+
+	<select id="selectMembershipList" resultType="MembershipVO">
+	/* memberMapper.selectMembershipList - MS_NUM의 멤버십 조회 */
+		SELECT
+			CONCAT('CHEONGDAM/MEMBERSHIP_DIV:', A.MEMBERSHIP_DIV, '/MS_NUM:', B.MS_NUM, '/BARCODE_NO:', C.BARCODE_NO) QR
+		    , A.MEMBERSHIP_DIV
+		    , B.MS_NUM
+		    , C.BARCODE_NO 
+		    , D.MEMBERSHIP_NAME
+		    , D.IMG_FILE_NAME
+		FROM DR_MEMBERSHIP_MAIN A
+			, DR_MEMBERSHIP_USER B
+			, DR_MEMBERSHIP_BARCODE C
+		    , DR_CD_MEMBERSHIP D
+		WHERE B.CO_BRAND_DIV = A.CO_BRAND_DIV
+			AND B.CO_DIV = A.CO_DIV
+			AND B.MEMBERSHIP_NO = A.MEMBERSHIP_NO			
+			AND C.CO_BRAND_DIV = B.CO_BRAND_DIV
+			AND C.CO_DIV = B.CO_DIV
+			AND C.MEMBERSHIP_NO = B.MEMBERSHIP_NO
+			AND C.MS_NUM = B.MS_NUM			
+		    AND D.CO_BRAND_DIV = C.CO_BRAND_DIV
+		    AND D.CO_DIV = C.CO_DIV
+		    AND D.MEMBERSHIP_DIV = A.MEMBERSHIP_DIV		    
+		    AND A.CO_BRAND_DIV = #{coBrandDiv}
+			AND B.MS_NUM = #{msNum}
+			AND A.USE_YN = 'Y'
+			AND B.USE_YN = 'Y'
+			AND C.USE_YN = 'Y'
+			AND D.USE_YN = 'Y'
+    </select>
+    
+    <select id="selectBenefitList" resultType="MembershipVO">
+    /* memberMapper.selectBenefitList - 멤버십 혜택 조회 */
+		SELECT 
+			A.MEMBERSHIP_DIV
+		    , B.BENEFIT_NO
+		    , B.BENEFIT_NM 
+		FROM DR_MEMBERSHIP_BENEFIT A
+			, DR_CD_BENEFIT B
+		WHERE A.CO_BRAND_DIV = B.CO_BRAND_DIV 
+			AND A.BENEFIT_NO = B.BENEFIT_NO
+			AND A.CO_BRAND_DIV = #{coBrandDiv} 
+			AND A.MEMBERSHIP_DIV = #{membershipDiv}
+			AND B.USE_YN='Y';	
+    </select>
+    
+</mapper>

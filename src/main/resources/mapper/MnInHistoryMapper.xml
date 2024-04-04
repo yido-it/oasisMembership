@@ -1,0 +1,125 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<!-- 
+ * 테이블명 : MN_IN_HISTORY
+ * 테이블 설명 : 입금내역
+-->
+<mapper namespace="com.yido.clubd.repository.MnInHistoryMapper">
+
+ 	<select id="getMnSeq" parameterType="hashmap" resultType="int">
+ 		SELECT CAST(DR_NEXTVAL(#{coDiv}, '', CONCAT('DR_M',DATE_FORMAT(NOW(),'%Y%m%d') ,'_SEQ')) AS UNSIGNED )		
+	</select>
+	
+	<select id="getMnInHistory" parameterType="MnInHistory" resultType="MnInHistory">
+		SELECT *
+		FROM MN_IN_HISTORY 
+		WHERE 1=1 
+		<if test='mnSeq != null and mnSeq != ""'>
+		  AND MN_SEQ = #{mnSeq}
+		</if>	
+		<if test='mnSerialNo != null and mnSerialNo != ""'>
+		  AND MN_SERIAL_NO = #{mnSerialNo}
+		</if>	
+		<if test='mnInDay != null and mnInDay != ""'>
+		  AND MN_IN_DAY = #{mnInDay}
+		</if>	
+		
+	</select>
+	
+	<!-- 입금내역 등록 -->
+    <insert id="insertMnInHistory">
+    	INSERT INTO MN_IN_HISTORY (
+			CO_DIV					, MN_IN_DAY			, MN_SEQ			, MN_REV_AMOUNT			
+			, MN_IN_AMOUNT			, MN_CHANGE_AMOUNT 	, MN_IN_NO			, MN_CARD_APPROVAL	
+			, MN_APP_DATE 			, MN_CARD_DIV		, MN_CARD_NAME		
+			, INPUT_STAFF			, INPUT_DATETIME	, INPUT_IP			, ORDER_ID		
+			, TRANSACTION_ID		, CANCEL_KEY 		, MN_CANCEL_YN		, MN_REMARK			
+			, MN_IN_NAME			, MS_NUM			, MN_SHOP_CD
+		<if test='mnMonth != null'>
+		 	, MN_MONTH
+		</if>	
+		<if test='mnOriCoDiv != null'>
+		 	, MN_ORI_CO_DIV			, MN_ORI_IN_DAY		, MN_ORI_MN_SEQ
+		</if>	
+		<if test='mnSerialNo != null'>
+		 	, MN_SERIAL_NO			, MN_ORI_SERIAL_NO
+		</if>	
+		<if test='mnBeforeDiv != null'>
+		 	, MN_BEFORE_DIV			
+		</if>
+		<if test='mnPayDiv != null'>
+		 	, MN_PAY_DIV	
+		</if>
+		<if test='saleSeq != null'>
+		 	, SALE_SEQ
+		</if>	
+    	) values (
+    		#{coDiv}	   			, #{mnInDay}   		, #{mnSeq}			, #{mnRevAmount} 	
+    		, #{mnInAmount} 		, #{mnChangeAmount}	, #{mnInNo}	    	, #{mnCardApproval} 
+    		, #{mnAppDate}			, #{mnCardDiv}    	, #{mnCardName}   
+    		, 'APP'					, NOW()				, #{ipAddr}			, #{orderId}		
+    		, #{transactionId}		, #{cancelKey}		, #{mnCancelYn}		, #{mnRemark}	
+    		, #{mnInName}			, #{msNum}			, '10'
+    	<if test='mnMonth != null'>
+		 	, #{mnMonth}   			
+		</if>
+    	<if test='mnOriCoDiv != null'>
+		 	, #{mnOriCoDiv}			, #{mnOriInDay}		, #{mnOriMnSeq}
+		</if>	
+			
+		<if test='mnSerialNo != null'>
+		 	, #{mnSerialNo}			, #{mnOriSerialNo}
+		</if>	
+		<if test='mnBeforeDiv != null'>
+		 	, #{mnBeforeDiv}			
+		</if>
+		<if test='mnPayDiv != null'>
+		 	, #{mnPayDiv}			
+		</if>
+		<if test='saleSeq != null'>
+		 	, #{saleSeq}	
+		</if>	
+    	)  	
+    </insert>
+    
+    <!-- 입금내역 변경 -->
+    <update id="updateMnInHistory" parameterType="hashmap">
+    	UPDATE MN_IN_HISTORY 
+    	   SET MN_IN_NAME 		= #{mnInName}
+    	     , MS_NUM 			= #{msNum}
+		 WHERE CO_DIV 			= #{coDiv}
+		   AND MN_IN_DAY 		= #{mnInDay}
+		   AND MN_SEQ 			= #{mnSeq}	
+    </update>
+    
+    <!-- MN_CANCEL_YN = 'Y' 로 변경  -->
+    <update id="updateMnCancelYn" parameterType="hashmap">
+    	UPDATE MN_IN_HISTORY 
+    	   SET MN_CANCEL_YN 	= 'Y'
+		 WHERE CO_DIV 			= #{coDiv}
+		   AND MN_IN_DAY 		= #{mnInDay}
+		   AND MN_SEQ 			= #{mnSeq}	
+    </update>
+    
+    <!-- MnSerialNo 변경 -->
+    <update id="updateMnSerialNo" parameterType="hashmap">
+    	UPDATE MN_IN_HISTORY 
+    	   SET MN_SERIAL_NO 	= #{mnSerialNo}
+		 WHERE CO_DIV 			= #{coDiv}
+		   AND MN_IN_DAY 		= #{mnInDay}
+		   AND MN_SEQ 			= #{mnSeq}	
+    </update>
+    
+    <!-- 카드사 정보조회 -->
+ 	<select id="selectCardInfo" parameterType="hashmap" resultType="hashmap">
+		SELECT CD_REFER   AS CARD_CODE
+		     , CD_TITLE1 AS CARD_NAME
+		  FROM CD_COMMON
+		 WHERE CO_DIV      	= #{coDiv}
+		   AND CD_DIVISION 	= '043'
+           AND CD_TYPE 		= '9'
+		   AND CD_REFER2   	= #{cardCompanyCode}
+	</select>
+	
+</mapper>

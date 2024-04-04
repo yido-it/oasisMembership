@@ -1,0 +1,191 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<!-- 
+ * 테이블명 : DR_BK_MARK
+ * 테이블 설명 : 예약선점용
+-->
+<mapper namespace="com.yido.clubd.repository.DrBkMarkMapper">
+
+	<!-- DrBkMark 테이블 그대로 조회하는 용도  -->
+	<select id="getDrBkMark" parameterType="hashmap" resultType="DrBkMark">
+ 		SELECT *
+		 FROM DR_BK_MARK
+		WHERE CO_DIV 	= #{coDiv} 
+		  AND BK_DAY 	= #{bkDay} 
+	   	  AND BAY_CONDI = #{bayCondi} 
+		  AND BK_TIME 	= #{bkTime} 
+		  AND BK_SEQ 	= #{bkSeq}       
+    </select>
+   
+	<select id="selectList" parameterType="BookInfoVO" resultType="DrBkMark">
+ 		SELECT CO_DIV
+ 			 , BK_DAY
+ 			 , BAY_CONDI
+ 			 , BK_TIME
+ 			 , BK_SEQ
+ 			 , BK_STATE
+ 			 , BK_SERIAL_NO
+ 			 , ENTRY_METHOD
+ 			 , ENTRY_USER
+ 			 , ENTRY_IP
+ 			 , ENTRY_DATETIME
+		 FROM DR_BK_MARK
+		WHERE 1=1	
+		<if test='coDiv != null and coDiv != ""'>
+		AND CO_DIV = #{coDiv} 
+		</if>	
+		<if test='bayCondi != null and bayCondi != ""'>
+		AND BAY_CONDI = #{bayCondi} 
+		</if>	
+		<if test='bkDay != null and bkDay != ""'>
+		AND BK_DAY = #{bkDay} 
+		</if>	
+		<if test='bkTime != null and bkTime != ""'>
+		AND BK_TIME = #{bkTime} 
+		</if>	
+		<if test='msId != null and msId != ""'>
+		AND ENTRY_USER = #{msId} 
+		</if>	
+		<if test='bkState != null and bkState != ""'>
+		AND BK_STATE = #{bkState} 
+		</if>	
+		<if test='bkSeq != null and bkSeq != ""'>
+		AND BK_SEQ = #{bkSeq} 
+		</if>	      
+		ORDER BY ENTRY_DATETIME DESC
+    </select>
+   
+   	<!-- [예약 선점용] 테이블에서 예약 가능한 데이터 조회하기 -->
+  	<select id="selectAvailableData" parameterType="hashmap" resultType="DrBkMark">
+ 		SELECT CO_DIV
+ 			 , BK_DAY
+ 			 , BAY_CONDI
+ 			 , BK_TIME
+ 			 , BK_SEQ
+ 			 , BK_STATE
+ 			 , BK_SERIAL_NO
+ 			 , ENTRY_METHOD
+ 			 , ENTRY_USER
+ 			 , ENTRY_IP
+ 			 , ENTRY_DATETIME
+		 FROM DR_BK_MARK
+		WHERE 1=1
+		AND BK_STATE = 'Y' AND (ENTRY_DATETIME IS NULL OR ENTRY_DATETIME = '') 		
+		<if test='coDiv != null and coDiv != ""'>
+		AND CO_DIV = #{coDiv} 
+		</if>	
+		<if test='bayCondi != null and bayCondi != ""'>
+		AND BAY_CONDI = #{bayCondi} 
+		</if>	
+		<if test='bkDay != null and bkDay != ""'>
+		AND BK_DAY = #{bkDay} 
+		</if>	
+		<if test='bkTime != null and bkTime != ""'>
+		AND BK_TIME = #{bkTime} 
+		</if>			      
+		ORDER BY BK_SEQ
+    </select>
+    
+    <!-- [예약 선점용] 테이블 데이터 변경 (예약완료되었을때)-->
+    <update id="updateDrBkMark" parameterType="hashmap">
+    	UPDATE DR_BK_MARK
+    	   SET BK_TIME 			= BK_TIME
+	    	<if test='bkSerialNo != null'>
+			, BK_SERIAL_NO 		= #{bkSerialNo}
+			</if>	
+		 WHERE CO_DIV 			= #{coDiv}
+		   AND BAY_CONDI 		= #{bayCondi}
+		   AND BK_DAY 			= #{bkDay}
+		   AND BK_TIME 			= #{bkTime}	   
+		<if test='bkSeq != null and bkSeq != ""'>
+		   AND BK_SEQ 			= #{bkSeq} 
+		</if>	 
+		<if test='entryUser != null and entryUser != ""'>
+		   AND ENTRY_USER 		= #{entryUser} 
+		</if>
+    </update>
+    
+    <!-- [예약 선점용] 선점 -->
+    <update id="updateMark" parameterType="hashmap">
+    	UPDATE DR_BK_MARK
+    	   SET ENTRY_METHOD 	= #{entryMethod}
+			 , ENTRY_USER 		= #{updMsId}
+			 , ENTRY_IP 		= #{ipAddr}
+			 , ENTRY_DATETIME	= DATE_ADD(NOW(), INTERVAL #{entryTime} MINUTE)	
+			 , BK_STATE			= 'N'		
+		 WHERE CO_DIV 			= #{coDiv}
+		   AND BAY_CONDI 		= #{bayCondi}
+		   AND BK_DAY 			= #{bkDay}
+		   AND BK_TIME 			= #{bkTime}	   
+		<if test='bkSeq != null and bkSeq != ""'>
+		   AND BK_SEQ 			= #{bkSeq} 
+		</if>	 
+		<if test='entryUser != null and entryUser != ""'>
+		   AND ENTRY_USER 		= #{entryUser} 
+		</if>
+		<if test='bkStateIsYn != null and bkStateIsYn == "Y"'>
+		   AND BK_STATE 		= #{bkStateIsYn}
+		</if>
+    </update>
+    
+    <!-- [예약 선점용] 해제 -->
+    <update id="updateUnMark" parameterType="hashmap">
+    	UPDATE DR_BK_MARK
+    	   SET ENTRY_METHOD 	= NULL
+			 , ENTRY_USER 		= NULL
+			 , ENTRY_IP 		= NULL
+			 , ENTRY_DATETIME	= NULL
+			 , BK_SERIAL_NO		= NULL
+			 , BK_STATE			= 'Y'
+		 WHERE CO_DIV 			= #{coDiv}
+		   AND BAY_CONDI 		= #{bayCondi}
+		   AND BK_DAY 			= #{bkDay}
+		   AND BK_TIME 			= #{bkTime}	   
+		<if test='bkSeq != null and bkSeq != ""'>
+		   AND BK_SEQ 			= #{bkSeq} 
+		</if>	 
+		<if test='entryUser != null and entryUser != ""'>
+		   AND ENTRY_USER 		= #{entryUser} 
+		</if>
+    </update>
+
+	<!-- 로그테이블 기록 -->
+    <insert id="insertDrBkMarkLog" parameterType="hashmap">
+        <selectKey resultType="Integer" keyProperty="logSeq" order="BEFORE">
+			SELECT IFNULL(CAST(MAX(LOG_SEQ) AS UNSIGNED), 0)+1 
+			  FROM DR_BK_MARK_LOG
+        </selectKey>       
+    	INSERT INTO DR_BK_MARK_LOG (
+			CO_DIV
+			, LOG_SEQ
+			, LOG_DIV
+			, BK_DAY
+			, BAY_CONDI
+			, BK_TIME
+			, BK_SEQ
+			, BK_STATE
+			, BK_SERIAL_NO
+			, ENTRY_METHOD
+			, ENTRY_USER
+			, ENTRY_IP
+			, ENTRY_DATETIME
+			, INPUT_DATETIME
+    	) values (
+    		#{coDiv}		
+    		, #{logSeq}	
+    		, #{logDiv}	
+    		, #{bkDay}		
+    		, #{bayCondi}	
+    		, #{bkTime}		
+    		, #{bkSeq}	
+    		, #{bkState}		
+    		, #{bkSerialNo}		
+    		, #{entryMethod}	
+    		, #{entryUser}	
+    		, #{entryIp}	
+    		, #{entryDatetime}	
+    		, now()
+    	)  	
+    </insert>
+</mapper>

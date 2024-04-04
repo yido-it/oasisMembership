@@ -1,0 +1,865 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<!-- 
+ * 테이블명 : DR_MS_MAININFO 
+ * 테이블 설명 : 회원정보 (회원) 
+-->
+<mapper namespace="com.yido.clubd.repository.MemberMapper">
+
+	<select id="selectMember" resultType="MemberVO">
+	/* memberMapper.selectMember - MS_ID 또는 MS_NUM으로 회원정보 조회 (정보 수정) */
+		SELECT
+		  	  MS_NUM
+			, MS_STATUS
+			, MS_BK_GRANT
+			, MS_DIVISION
+			, MS_LEVEL
+			, MS_LOGIN_CD
+			, MS_LINK
+			, MS_ID
+			, MS_PASSWORD
+			, MS_NAME
+			, MS_ENAME
+			, MS_NICKNAME
+			, MS_IMAGENAME
+			, MS_SEX
+			, DATE_FORMAT(MS_BIRTH, '%Y-%m-%d') AS MS_BIRTH
+			, MS_BIRTHYL
+			, MS_FIRST_PHONE1
+			, AES_DECRYPT(UNHEX(MS_MID_PHONE1), 'YIDO') AS MS_MID_PHONE1
+			, MS_LAST_PHONE1
+			, SMS_CHK1
+			, MS_BLANK
+			, MS_VOUCHER_DAY
+			, MS_WEDDINGDAY
+			, MS_WEDDING
+			, AES_DECRYPT(UNHEX(MS_EMAIL), 'YIDO') AS MS_EMAIL
+			, MS_EMAIL_YN
+			, AES_DECRYPT(UNHEX(MS_HOMETEL), 'YIDO') AS MS_HOMETEL
+			, MS_HOMEZIP
+			, MS_HOMEADDR1
+			, MS_HOMEADDR2
+			, MS_POST_YN
+			, MS_COMPNM
+			, MS_COMPNO
+			, AES_DECRYPT(UNHEX(MS_COMPTEL), 'YIDO') AS MS_COMPTEL
+			, AES_DECRYPT(UNHEX(MS_COMPFAX), 'YIDO') AS MS_COMPFAX
+			, MS_COMPZIP
+			, MS_COMPADDR1
+			, MS_COMPADDR2
+			, MS_COMP_POST_YN
+			, MS_COMPDEPT
+			, MS_COMPPOSITION
+			, MS_REGDAY
+			, MS_ENDDAY
+			, MS_REMARK
+			, MS_MKT_AGREE_YN
+			, MS_DORMANT
+			, LOGIN_TIME
+			, MS_DI
+			, MS_JOB_CD
+			, MS_AREA1
+			, MS_AREA2
+			, MS_PUSH_KEY
+			, MS_ORDER
+			, INPUT_STAFF
+			, INPUT_DATETIME
+			, INPUT_IP
+			, UPDATE_STAFF
+			, UPDATE_DATETIME
+			, UPDATE_IP
+		FROM DR_MS_MAININFO
+		WHERE 1=1 
+			<if test='msId != null and msId != ""'>
+			AND MS_ID  = #{userId}
+			</if>
+			<if test='msNum != null and msNum != ""'>
+			AND MS_NUM  = #{msNum}
+			</if>
+		 	AND IFNULL(NULLIF(MS_BLANK,''),'N') = 'N'
+    </select>
+    
+    <select id="selectMemberList" resultType="MemberVO">
+		SELECT *
+		  FROM DR_MS_MAININFO
+		 WHERE IFNULL(NULLIF(MS_BLANK,''),'N') = 'N'
+		<choose> 
+		<when test='searchType != null and searchType == "name"'>
+		   AND MS_NAME LIKE CONCAT(#{searchTxt}, '%') 
+		</when> 
+		<when test='searchType != null and searchType == "id"'>
+		   AND MS_ID LIKE CONCAT(#{searchTxt}, '%') 
+		</when> 
+		<otherwise></otherwise>
+		</choose> 		
+    </select>
+    
+    
+    <select id="selectLoginUser" resultType="MemberVO">
+    	/* memberMapper.selectLoginUser - 아이디/비밀번호로 회원정보 조회 (로그인) */
+        SELECT
+          MS_NUM
+			, MS_STATUS
+			, MS_BK_GRANT
+			, MS_DIVISION
+			, MS_LEVEL
+			, MS_LOGIN_CD
+			, MS_LINK
+			, MS_ID
+			, MS_PASSWORD
+			, MS_NAME
+			, MS_ENAME
+			, MS_NICKNAME
+			, MS_IMAGENAME
+			, MS_SEX
+			, DATE_FORMAT(MS_BIRTH, '%Y-%m-%d') AS MS_BIRTH
+			, MS_BIRTHYL
+			, MS_FIRST_PHONE1
+			, AES_DECRYPT(UNHEX(MS_MID_PHONE1), 'YIDO') AS MS_MID_PHONE1
+			, MS_LAST_PHONE1
+			, SMS_CHK1
+			, MS_BLANK
+			, MS_VOUCHER_DAY
+			, MS_WEDDINGDAY
+			, MS_WEDDING
+			, AES_DECRYPT(UNHEX(MS_EMAIL), 'YIDO') AS MS_EMAIL
+			, MS_EMAIL_YN
+			, AES_DECRYPT(UNHEX(MS_HOMETEL), 'YIDO') AS MS_HOMETEL
+			, MS_HOMEZIP
+			, MS_HOMEADDR1
+			, MS_HOMEADDR2
+			, MS_POST_YN
+			, MS_COMPNM
+			, MS_COMPNO
+			, AES_DECRYPT(UNHEX(MS_COMPTEL), 'YIDO') AS MS_COMPTEL
+			, AES_DECRYPT(UNHEX(MS_COMPFAX), 'YIDO') AS MS_COMPFAX
+			, MS_COMPZIP
+			, MS_COMPADDR1
+			, MS_COMPADDR2
+			, MS_COMP_POST_YN
+			, MS_COMPDEPT
+			, MS_COMPPOSITION
+			, MS_REGDAY
+			, MS_ENDDAY
+			, MS_REMARK
+			, MS_MKT_AGREE_YN
+			, MS_DORMANT
+			, LOGIN_TIME
+			, MS_DI
+			, MS_JOB_CD
+			, MS_AREA1
+			, MS_AREA2
+			, MS_PUSH_KEY
+			, MS_ORDER
+			, INPUT_STAFF
+			, INPUT_DATETIME
+			, INPUT_IP
+			, UPDATE_STAFF
+			, UPDATE_DATETIME
+			, UPDATE_IP	 
+          FROM DR_MS_MAININFO 
+         WHERE 1 = 1
+         	AND MS_ID = #{msId} 
+         	AND MS_PASSWORD = SHA2(#{msPassword}, 256)
+            AND IFNULL(NULLIF(MS_BLANK,''),'N') = 'N'
+    </select>
+    <select id="selectSessionLoginUser" resultType="com.yido.clubd.common.utils.SessionVO">
+    	/* memberMapper.selectSessionLoginUser - 세션키로 조회 (자동 로그인) */
+        SELECT
+        	  MS_NUM
+			, MS_STATUS
+			, MS_BK_GRANT
+			, MS_DIVISION
+			, MS_LEVEL
+			, MS_LOGIN_CD
+			, MS_SESSION_KEY
+			, MS_SESSION_LIMIT
+			, MS_LINK
+			, MS_ID
+			, MS_PASSWORD
+			, MS_NAME
+			, MS_ENAME
+			, MS_NICKNAME
+			, MS_IMAGENAME
+			, MS_SEX
+			, DATE_FORMAT(MS_BIRTH, '%Y-%m-%d') AS MS_BIRTH
+			, MS_BIRTHYL
+			, MS_FIRST_PHONE1
+			, AES_DECRYPT(UNHEX(MS_MID_PHONE1), 'YIDO') AS MS_MID_PHONE1
+			, MS_LAST_PHONE1
+			, SMS_CHK1
+			, MS_BLANK
+			, MS_VOUCHER_DAY
+			, MS_WEDDINGDAY
+			, MS_WEDDING
+			, AES_DECRYPT(UNHEX(MS_EMAIL), 'YIDO') AS MS_EMAIL
+			, MS_EMAIL_YN
+			, AES_DECRYPT(UNHEX(MS_HOMETEL), 'YIDO') AS MS_HOMETEL
+			, MS_HOMEZIP
+			, MS_HOMEADDR1
+			, MS_HOMEADDR2
+			, MS_POST_YN
+			, MS_COMPNM
+			, MS_COMPNO
+			, AES_DECRYPT(UNHEX(MS_COMPTEL), 'YIDO') AS MS_COMPTEL
+			, AES_DECRYPT(UNHEX(MS_COMPFAX), 'YIDO') AS MS_COMPFAX
+			, MS_COMPZIP
+			, MS_COMPADDR1
+			, MS_COMPADDR2
+			, MS_COMP_POST_YN
+			, MS_COMPDEPT
+			, MS_COMPPOSITION
+			, MS_REGDAY
+			, MS_ENDDAY
+			, MS_REMARK
+			, MS_MKT_AGREE_YN
+			, MS_DORMANT
+			, LOGIN_TIME
+			, MS_DI
+			, MS_JOB_CD
+			, MS_AREA1
+			, MS_AREA2
+			, MS_PUSH_KEY
+			, MS_ORDER
+			, INPUT_STAFF
+			, INPUT_DATETIME
+			, INPUT_IP
+			, UPDATE_STAFF
+			, UPDATE_DATETIME
+			, UPDATE_IP	
+          FROM DR_MS_MAININFO 
+         WHERE 1 = 1
+         	AND MS_SESSION_KEY = #{msSessionKey}
+         	<![CDATA[AND MS_SESSION_LIMIT > NOW()]]>
+            AND IFNULL(NULLIF(MS_BLANK,''),'N') = 'N'
+    </select>
+    
+    <select id="selectMsNum" parameterType="hashmap" resultType="String">
+    	/* memberMapper.selectMsNum - MS_ID로 MS_NUM 조회 */
+		SELECT MS_NUM
+		  FROM DR_MS_MAININFO
+		 WHERE MS_ID = #{msId}
+		   AND IFNULL(NULLIF(MS_BLANK,''),'N') = 'N'
+	</select>
+	
+	<select id="checkSocialId" parameterType="hashmap" resultType="String">
+    	/* memberMapper.checkSocialId - MS_PHONE으로 소셜 가입 여부 조회 */
+		SELECT *
+		  FROM DR_MS_MAININFO
+		 WHERE 1 = 1
+		   AND MS_ID = #{msId}
+		   AND IFNULL(NULLIF(MS_BLANK,''),'N') = 'N'
+		LIMIT 1
+	</select>
+	
+	<select id="selectMsSession" parameterType="hashmap" resultType="com.yido.clubd.common.utils.SessionVO">
+		/* memberMapper.selectMsSession - MS_NUM으로 회원정보 조회 (세션에 적용) */
+		SELECT
+			  MS_NUM
+			, MS_STATUS
+			, MS_BK_GRANT
+			, MS_DIVISION
+			, MS_LEVEL
+			, MS_LOGIN_CD
+			, MS_LINK
+			, MS_ID
+			, MS_PASSWORD
+			, MS_NAME
+			, MS_ENAME
+			, MS_NICKNAME
+			, MS_IMAGENAME
+			, MS_SEX
+			, DATE_FORMAT(MS_BIRTH, '%Y-%m-%d') AS MS_BIRTH
+			, MS_BIRTHYL
+			, MS_FIRST_PHONE1
+			, AES_DECRYPT(UNHEX(MS_MID_PHONE1), 'YIDO') AS MS_MID_PHONE1
+			, MS_LAST_PHONE1
+			, SMS_CHK1
+			, MS_BLANK
+			, MS_VOUCHER_DAY
+			, MS_WEDDINGDAY
+			, MS_WEDDING
+			, AES_DECRYPT(UNHEX(MS_EMAIL), 'YIDO') AS MS_EMAIL
+			, MS_EMAIL_YN
+			, AES_DECRYPT(UNHEX(MS_HOMETEL), 'YIDO') AS MS_HOMETEL
+			, MS_HOMEZIP
+			, MS_HOMEADDR1
+			, MS_HOMEADDR2
+			, MS_POST_YN
+			, MS_COMPNM
+			, MS_COMPNO
+			, AES_DECRYPT(UNHEX(MS_COMPTEL), 'YIDO') AS MS_COMPTEL
+			, AES_DECRYPT(UNHEX(MS_COMPFAX), 'YIDO') AS MS_COMPFAX
+			, MS_COMPZIP
+			, MS_COMPADDR1
+			, MS_COMPADDR2
+			, MS_COMP_POST_YN
+			, MS_COMPDEPT
+			, MS_COMPPOSITION
+			, MS_REGDAY
+			, MS_ENDDAY
+			, MS_REMARK
+			, MS_MKT_AGREE_YN
+			, MS_DORMANT
+			, LOGIN_TIME
+			, MS_DI
+			, MS_JOB_CD
+			, MS_AREA1
+			, MS_AREA2
+			, MS_PUSH_KEY
+			, MS_ORDER
+			, INPUT_STAFF
+			, INPUT_DATETIME
+			, INPUT_IP
+			, UPDATE_STAFF
+			, UPDATE_DATETIME
+			, UPDATE_IP					 
+		FROM DR_MS_MAININFO
+		WHERE MS_NUM = #{msNum}
+			AND IFNULL(NULLIF(MS_BLANK,''),'N') = 'N'
+		LIMIT 1
+	</select>
+	
+	 <update id="updateDormant">
+    	/* memberMapper."updateDormant" - 휴면상태 해제 (DR_MS_MAININFO) */
+    	UPDATE DR_MS_MAININFO
+    		SET MS_DORMANT = 'N'  
+			, UPDATE_STAFF = #{updateStaff}
+			, UPDATE_DATETIME = NOW()
+			, UPDATE_IP = #{updateIp}
+		 WHERE MS_NUM = #{msNum}		 
+    </update>  
+		
+    <insert id="insertMember">
+    	/* memberMapper.insertMember - 회원정보 등록 (DR_MS_MAININFO) */
+    	<selectKey keyColumn="MS_NUM" keyProperty="msNum" order="BEFORE" resultType="java.lang.String">
+    		SELECT LPAD(CAST(DR_NEXTVAL('001','','DR_MS_MAININFO_SEQ') AS UNSIGNED),12,0) MS_NUM
+    	</selectKey>
+    	INSERT INTO DR_MS_MAININFO (
+			  MS_NUM
+			, MS_STATUS
+			, MS_BK_GRANT
+			, MS_DIVISION
+			, MS_LEVEL
+			, MS_LOGIN_CD
+			, MS_ID
+			, MS_PASSWORD
+			, MS_NAME
+			, MS_SEX
+			, MS_FIRST_PHONE1
+			, MS_MID_PHONE1
+			, MS_LAST_PHONE1
+			, SMS_CHK1
+			, MS_BLANK
+			, MS_EMAIL
+			, MS_EMAIL_YN
+			, MS_REGDAY		
+			, MS_MKT_AGREE_YN
+			, MS_DORMANT
+			, INPUT_STAFF			
+			, INPUT_DATETIME
+			, INPUT_IP	
+		) VALUES (
+			  #{msNum}
+			, #{msStatus}
+			, #{msBkGrant}
+			, #{msDivision}
+			, #{msLevel}			
+			, #{msLoginCd}
+			, #{msId}
+			, SHA2(#{msPassword}, 256)
+			, #{msName}	
+			, #{msSex}		
+			, #{msFirstPhone1}
+			, HEX(AES_ENCRYPT(#{msMidPhone1}, 'YIDO'))
+			, #{msLastPhone1}
+			, #{smsChk1}			
+			, #{msBlank}			
+			, HEX(AES_ENCRYPT(#{msEmail}, 'YIDO'))		
+			, #{msEmailYn}			
+			, DATE_FORMAT(NOW(), '%Y%m%d')		
+			, #{msMktAgreeYn}
+			, #{msDormant}
+			, #{inputStaff}
+			, NOW()
+			, #{ipAddr}						
+		)	 	
+    </insert>
+    <!-- <update id="updateMember">
+    	UPDATE DR_MS_MAININFO
+    		SET MS_NUM = #{msNum}
+    		<if test='newMsPassword != null and newMsPassword != ""'>
+			, MS_PASSWORD = SHA2(#{newMsPassword}, 256)
+			</if>
+			<if test='msName != null and msName != ""'>
+			, MS_NAME = #{msName}
+			</if>
+			<if test='smsChk1 != null and smsChk1 != ""'>
+			, SMS_CHK1 = #{smsChk1}
+			</if>
+			<if test='msPhone != null and msPhone != ""'>
+			, MS_FIRST_PHONE1 = #{msFirstPhone1}
+			, MS_MID_PHONE1 = HEX(AES_ENCRYPT(#{msMidPhone1}, 'YIDO'))
+			, MS_LAST_PHONE1 = #{msLastPhone1}
+			</if>
+			, UPDATE_STAFF = #{updateStaff}
+			, UPDATE_DATETIME = NOW()
+			, UPDATE_IP = #{updateIp}
+		 WHERE MS_NUM = #{msNum}
+    </update> -->
+    <update id="updateMember">
+    	/* memberMapper.updateMember - 회원정보 수정 (DR_MS_MAININFO) */
+    	UPDATE DR_MS_MAININFO
+    		SET MS_NUM = #{msNum}
+    		<if test='msStatus != null and msStatus != ""'>
+			, MS_STATUS = #{msStatus}
+			</if>
+    		<if test='newMsPassword != null and newMsPassword != ""'>
+			, MS_PASSWORD = SHA2(#{newMsPassword}, 256)
+			</if>
+			<if test='msName != null and msName != ""'>
+			, MS_NAME = #{msName}
+			</if>
+			<if test='smsChk1 != null and smsChk1 != ""'>
+			, SMS_CHK1 = #{smsChk1}
+			</if>
+			<if test='msPhone != null and msPhone != ""'>
+			, MS_FIRST_PHONE1 = #{msFirstPhone1}
+			, MS_MID_PHONE1 = HEX(AES_ENCRYPT(#{msMidPhone1}, 'YIDO'))
+			, MS_LAST_PHONE1 = #{msLastPhone1}
+			</if>
+			<if test='msBirth != null and msBirth != ""'>
+			, MS_BIRTH = DATE_FORMAT(#{msBirth}, '%Y%m%d')
+			</if>			
+			<if test='msCompnm != null and msCompnm != ""'>
+			, MS_COMPNM = #{msCompnm}
+			</if>		
+			<if test='msJobCd != null and msJobCd != ""'>
+			, MS_JOB_CD = #{msJobCd}
+			</if>
+			<if test='msArea1 != null and msArea1 != ""'>
+			, MS_AREA1 = #{msArea1}
+			</if>
+			<if test='msArea2 != null and msArea2 != ""'>
+			, MS_AREA2 = #{msArea2}
+			</if>
+			, UPDATE_STAFF = #{updateStaff}
+			, UPDATE_DATETIME = NOW()                                                                                                                                                                                                                                                                                                                                                                                                            
+			, UPDATE_IP = #{updateIp}
+		 WHERE MS_NUM = #{msNum}		 
+    </update>  
+    <select id="selectMemberBasic" resultType="MemberVO" parameterType="String">
+    	/* memberMapper.selectMemberBasic - 회원 추가정보 조회 (DR_MS_BASIC) */
+    	SELECT
+    		  MS_NUM
+    		, MS_HANDCAP
+    		, MS_LESSON_EXP_YN
+    		, MS_LESSON_MINUTE
+    		, MS_LESSON_TREM
+    		, MS_LESSON_UNIT
+    		, MS_ROUND_CNT
+    		, MS_ROUND_UNIT
+    	FROM DR_MS_BASIC A
+    		LEFT OUTER JOIN CD_COMMON B ON B.CD_CODE = MS_LESSON_UNIT AND B.CD_DIVISION = '029'
+    		LEFT OUTER JOIN CD_COMMON C ON C.CD_CODE = MS_ROUND_UNIT AND C.CD_DIVISION = '029'
+    	WHERE MS_NUM = #{msNum}
+    </select>
+    <insert id="insertMemberBasic">
+    	/* memberMapper.insertMemberBasic - 회원 추가정보 등록 (DR_MS_BASIC) */
+    	INSERT INTO DR_MS_BASIC (
+    		  MS_NUM
+    		<if test='msHandcap != null and msHandcap != ""'>
+    		, MS_HANDCAP
+    		</if>
+    		<if test='msLessonExpYn != null and msLessonExpYn != ""'>
+    		, MS_LESSON_EXP_YN
+    		</if>
+    		<if test='msLessonMinute != null and msLessonMinute != ""'>
+    		, MS_LESSON_MINUTE
+    		</if>
+    		<if test='msLessonTrem > 0'>
+    		, MS_LESSON_TREM
+    		, MS_LESSON_UNIT
+    		</if>
+    		<if test='msRoundCnt > 0'>
+    		, MS_ROUND_CNT
+    		, MS_ROUND_UNIT
+    		</if>
+    	)VALUES (
+    		  #{msNum}
+    		<if test='msHandcap != null and msHandcap != ""'>
+    		, #{msHandcap}
+    		</if>
+    		<if test='msLessonExpYn != null and msLessonExpYn != ""'>
+    		, #{msLessonExpYn}
+    		</if>
+    		<if test='msLessonMinute != null and msLessonMinute != ""'>
+    		, #{msLessonMinute}
+    		</if>
+    		<if test='msLessonTrem > 0'>
+    		, #{msLessonTrem}
+    		, #{msLessonUnit}
+    		</if>
+    		<if test='msRoundCnt > 0'>
+    		, #{msRoundCnt}
+    		, #{msRoundUnit}
+    		</if>
+    	)
+   	</insert>
+    <update id="updateMemberBasic" >
+    	/* memberMapper.updateMemberBasic - 회원 추가정보 수정 (DR_MS_BASIC) */
+    	UPDATE DR_MS_BASIC
+    		SET MS_NUM = #{msNum}
+    		<if test='msHandcap != null and msHandcap != ""'>
+			, MS_HANDCAP = #{msHandcap}
+			</if>
+			<if test='msLessonExpYn != null and msLessonExpYn != ""'>
+			, MS_LESSON_EXP_YN = #{msLessonExpYn}
+			</if>
+			<if test='msLessonMinute != null and msLessonMinute != ""'>
+			, MS_LESSON_MINUTE = #{msLessonMinute}
+			</if>
+			<if test='msLessonTrem > 0'>
+			, MS_LESSON_TREM = #{msLessonTrem}
+			, MS_LESSON_UNIT = #{msLessonUnit}
+			</if>
+			<if test='msRoundCnt > 0'>
+			, MS_ROUND_CNT = #{msRoundCnt}
+			, MS_ROUND_UNIT = #{msRoundUnit}
+			</if>
+		 WHERE MS_NUM = #{msNum}
+    </update>  
+    <select id="selectMemberCarList" resultType="MemberVO" parameterType="String">
+    	/* memberMapper.selectMemberCarList - 회원 차량정보 조회 (DR_MS_CAR) */
+    	SELECT
+    		  CAR_SEQ
+    		, MS_NUM
+    		, MS_CAR_NO
+    		, MS_CAR_KIND
+    	FROM DR_MS_CAR
+    	WHERE MS_NUM = #{msNum}
+    	ORDER BY CAR_SEQ ASC
+    </select>
+    <delete id="deleteMemberCar">
+    	/* memberMapper.deleteMemberCar - 회원 차량정보 삭제 (DR_MS_CAR) */
+    	DELETE FROM DR_MS_CAR WHERE MS_NUM = #{msNum}
+    </delete>
+    <insert id="insertMemberCar">
+    	/* memberMapper.insertMemberCar - 회원 차량정보 등록 (DR_MS_CAR) */
+    	INSERT INTO DR_MS_CAR (
+    		  CAR_SEQ
+    		, MS_NUM
+    		, MS_CAR_NO
+    	)VALUES (
+    		  #{carSeq}
+    		, #{msNum}
+    		, #{msCarNo}
+    	)
+    </insert>
+    
+	<select id="selectFindUser" parameterType="hashmap" resultType="MemberVO">
+		/* memberMapper.selectFindUser - 아이디/전화번호 중복체크, 아이디 유무 확인 */
+		SELECT 
+			  MS_NUM
+			, MS_ID
+			, MS_LOGIN_CD
+			, MS_BLANK
+		FROM DR_MS_MAININFO
+		WHERE 1 = 1
+			<if test='msId != null and msId != ""'>
+	        AND MS_ID = #{msId} 
+	        </if>
+	        <if test='msName != null and msName != ""'>
+		 	AND MS_NAME = #{msName}
+		 	</if>
+			<if test='msPhone != null and msPhone != ""'>
+			AND CONCAT(MS_FIRST_PHONE1, '-', AES_DECRYPT(UNHEX(MS_MID_PHONE1), 'YIDO'), '-', MS_LAST_PHONE1 ) = #{msPhone}
+			</if>
+			AND IFNULL(NULLIF(MS_BLANK,''),'N') = 'N'
+		 LIMIT 1
+	</select>
+	
+	<update id="updatePassword" parameterType="hashmap">
+	/* memberMapper.updatePassword - 비밀번호 초기화 */
+		UPDATE DR_MS_MAININFO
+		   SET MS_PASSWORD = SHA2(#{newMsPassword}, 256)
+		 WHERE MS_NUM = #{msNum}
+	</update>
+	
+	<!-- 회원 위약체크 -->
+	<select id="chkMsBkGrant" parameterType="hashmap" resultType="String">
+		SELECT MS_BK_GRANT
+		  FROM DR_MS_MAININFO
+		 WHERE MS_ID = #{msId}
+		   AND IFNULL(NULLIF(MS_BLANK,''),'N') = 'N'
+	</select>
+	
+	<select id="selectProList" resultType="MemberVO">
+	/* memberMapper.selectProList - 프로 목록 조회 (DR_MS_MAININFO) */
+		SELECT
+			  A.MS_NUM
+			, MS_STATUS
+			, MS_BK_GRANT
+			, MS_DIVISION
+			, MS_LEVEL
+			, MS_LOGIN_CD
+			, MS_LINK
+			, MS_ID
+			, MS_NAME
+			, MS_ENAME
+			, MS_NICKNAME
+			, MS_IMAGENAME
+			, MS_SEX
+			, DATE_FORMAT(MS_BIRTH, '%Y-%m-%d') AS MS_BIRTH
+			, MS_BIRTHYL
+			, MS_FIRST_PHONE1
+			, AES_DECRYPT(UNHEX(MS_MID_PHONE1), 'YIDO') AS MS_MID_PHONE1
+			, MS_LAST_PHONE1
+			, SMS_CHK1
+			, MS_BLANK
+			, MS_VOUCHER_DAY
+			, MS_WEDDINGDAY
+			, MS_WEDDING
+			, AES_DECRYPT(UNHEX(MS_EMAIL), 'YIDO') AS MS_EMAIL
+			, MS_EMAIL_YN
+			, AES_DECRYPT(UNHEX(MS_HOMETEL), 'YIDO') AS MS_HOMETEL
+			, MS_HOMEZIP
+			, MS_HOMEADDR1
+			, MS_HOMEADDR2
+			, MS_POST_YN
+			, MS_COMPNM
+			, MS_COMPNO
+			, AES_DECRYPT(UNHEX(MS_COMPTEL), 'YIDO') AS MS_COMPTEL
+			, AES_DECRYPT(UNHEX(MS_COMPFAX), 'YIDO') AS MS_COMPFAX
+			, MS_COMPZIP
+			, MS_COMPADDR1
+			, MS_COMPADDR2
+			, MS_COMP_POST_YN
+			, MS_COMPDEPT
+			, MS_COMPPOSITION
+			, MS_REGDAY
+			, MS_ENDDAY
+			, MS_REMARK
+			, MS_MKT_AGREE_YN
+			, MS_DORMANT
+			, LOGIN_TIME
+			, MS_DI
+			, MS_AREA1
+			, MS_AREA1
+			, A.INPUT_STAFF
+			, A.INPUT_DATETIME
+			, A.INPUT_IP
+			, A.UPDATE_STAFF
+			, A.UPDATE_DATETIME
+			, A.UPDATE_IP
+			, B.MS_IMG_PATH
+    		, B.MS_IMG_NAME
+		    , C.LIC_NAME
+		    , MS_ORDER
+		FROM DR_MS_MAININFO A
+		LEFT OUTER JOIN DR_MS_PICTURE B ON A.MS_NUM = B.MS_NUM
+		LEFT OUTER JOIN (
+			SELECT
+				MS_NUM
+				, BB.CD_TITLE1 AS LIC_NAME
+				, MIN(AA.LIC_SEQ)
+			FROM PRO_LICENSE AA
+			LEFT OUTER JOIN CD_COMMON BB ON BB.CD_CODE = AA.LIC_KIND AND BB.CD_DIVISION = '018'
+			WHERE LIC_OPEN_YN != 'N'
+			GROUP BY MS_NUM
+		) C ON A.MS_NUM = C.MS_NUM
+		WHERE 1 = 1
+			AND A.MS_DIVISION = '00'
+			AND A.MS_LEVEL = '00'
+			AND IFNULL(NULLIF(A.MS_BLANK,''),'N') = 'N'
+			AND IFNULL(NULLIF(A.MS_DORMANT,''),'N') = 'N'
+			AND A.MS_STATUS = 'Y'     
+		ORDER BY CAST(IFNULL(NULLIF(MS_ORDER,''),'999') AS UNSIGNED), INPUT_DATETIME
+	</select>
+	
+	<select id="selectAmbassadorList" resultType="MemberVO">
+	/* memberMapper.selectAmbassadorList - 앰배서더 목록 조회 (DR_MS_MAININFO) */
+		SELECT
+			  A.MS_NUM
+			, MS_STATUS
+			, MS_BK_GRANT
+			, MS_DIVISION
+			, MS_LEVEL
+			, MS_LOGIN_CD
+			, MS_LINK
+			, MS_ID
+			, MS_NAME
+			, MS_ENAME
+			, MS_NICKNAME
+			, MS_IMAGENAME
+			, MS_SEX
+			, DATE_FORMAT(MS_BIRTH, '%Y-%m-%d') AS MS_BIRTH
+			, MS_BIRTHYL
+			, MS_FIRST_PHONE1
+			, AES_DECRYPT(UNHEX(MS_MID_PHONE1), 'YIDO') AS MS_MID_PHONE1
+			, MS_LAST_PHONE1
+			, SMS_CHK1
+			, MS_BLANK
+			, MS_VOUCHER_DAY
+			, MS_WEDDINGDAY
+			, MS_WEDDING
+			, AES_DECRYPT(UNHEX(MS_EMAIL), 'YIDO') AS MS_EMAIL
+			, MS_EMAIL_YN
+			, AES_DECRYPT(UNHEX(MS_HOMETEL), 'YIDO') AS MS_HOMETEL
+			, MS_HOMEZIP
+			, MS_HOMEADDR1
+			, MS_HOMEADDR2
+			, MS_POST_YN
+			, MS_COMPNM
+			, MS_COMPNO
+			, AES_DECRYPT(UNHEX(MS_COMPTEL), 'YIDO') AS MS_COMPTEL
+			, AES_DECRYPT(UNHEX(MS_COMPFAX), 'YIDO') AS MS_COMPFAX
+			, MS_COMPZIP
+			, MS_COMPADDR1
+			, MS_COMPADDR2
+			, MS_COMP_POST_YN
+			, MS_COMPDEPT
+			, MS_COMPPOSITION
+			, MS_REGDAY
+			, MS_ENDDAY
+			, MS_REMARK
+			, MS_MKT_AGREE_YN
+			, MS_DORMANT
+			, LOGIN_TIME
+			, MS_DI
+			, MS_AREA1
+			, MS_AREA2
+			, A.INPUT_STAFF
+			, A.INPUT_DATETIME
+			, A.INPUT_IP
+			, A.UPDATE_STAFF
+			, A.UPDATE_DATETIME
+			, A.UPDATE_IP
+			, B.MS_IMG_PATH
+    		, B.MS_IMG_NAME
+		    , C.LIC_NAME
+		    , MS_ORDER
+		FROM DR_MS_MAININFO A
+		LEFT OUTER JOIN DR_MS_PICTURE B ON A.MS_NUM = B.MS_NUM
+		LEFT OUTER JOIN (
+			SELECT
+				MS_NUM
+				, BB.CD_TITLE1 AS LIC_NAME
+				, MIN(AA.LIC_SEQ)
+			FROM PRO_LICENSE AA
+			LEFT OUTER JOIN CD_COMMON BB ON BB.CD_CODE = AA.LIC_KIND AND BB.CD_DIVISION = '018'
+			WHERE LIC_OPEN_YN != 'N'
+			GROUP BY MS_NUM
+		) C ON A.MS_NUM = C.MS_NUM
+		WHERE 1 = 1
+			AND A.MS_DIVISION = '00'
+			AND A.MS_LEVEL = '02'
+			AND IFNULL(NULLIF(A.MS_BLANK,''),'N') = 'N'
+			AND IFNULL(NULLIF(A.MS_DORMANT,''),'N') = 'N'
+			AND A.MS_STATUS = 'Y'     
+		ORDER BY CAST(IFNULL(NULLIF(MS_ORDER,''),'999') AS UNSIGNED), INPUT_DATETIME
+	</select>
+	
+	<update id="updateMsSessionKey" parameterType="hashmap">
+	/* memberMapper.updateMsSessionKey - 회원 세션키 등록 (자동 로그인) */
+		UPDATE DR_MS_MAININFO
+			<if test="msSessionKey != null">
+			  SET MS_SESSION_KEY = #{msSessionKey}
+			, MS_SESSION_LIMIT = NOW() + INTERVAL 30 DAY
+		    </if>
+		    <if test="msSessionKey == null">
+			  SET MS_SESSION_KEY = NULL
+			, MS_SESSION_LIMIT = NULL
+			</if>
+		WHERE MS_NUM = #{msNum}
+	</update>
+	<insert id="insertLoginLog" parameterType="hashmap">
+	/* memberMapper.insertLoginLog - 로그인 접속 로그 등록 (하루 한번) */
+		<selectKey resultType="Integer" keyProperty="loginSeq" order="BEFORE">
+			SELECT IFNULL(MAX(LOGIN_SEQ), 0) + 1 as loginSeq
+			FROM MS_MAININFO_LOGIN
+			WHERE 1 = 1
+				AND MS_NUM = #{msNum}
+				AND LOGIN_DATE = DATE_FORMAT(NOW(), '%Y%m%d')
+	  	</selectKey>
+		INSERT INTO MS_MAININFO_LOGIN (
+			MS_NUM
+		  , LOGIN_DATE
+		  , LOGIN_SEQ
+		  , LOGIN_PLATFORM
+		  , USER_AGENT
+		  , LOGIN_AUTO
+		  , INPUT_STAFF
+		  , INPUT_DATETIME
+		  , INPUT_IP
+		) SELECT
+			#{msNum}
+		  , DATE_FORMAT(NOW(), '%Y%m%d')
+		  , #{loginSeq}
+		  , #{platform}
+		  , #{userAgent}
+		  , #{loginAuto}
+		  , #{inputStaff}
+		  , NOW()
+		  , #{ipAddr}
+		FROM DUAL
+		WHERE 1 > (
+			SELECT COUNT(MS_NUM) 
+			FROM MS_MAININFO_LOGIN
+			WHERE 1 = 1
+				AND MS_NUM = #{msNum}
+				AND LOGIN_DATE = DATE_FORMAT(NOW(), '%Y%m%d')
+				AND INPUT_DATETIME
+			BETWEEN DATE_ADD(NOW(), INTERVAL -1 MINUTE) AND NOW()
+		   )
+	</insert>
+	
+	<select id="selectDrMsPicture" resultType="MemberVO">
+		/* memberMapper.selectDrMsPicture - 회원/프로 프로필 이미지 조회 */
+		SELECT 
+			  MS_IMG_NAME
+			, MS_IMG_PATH
+		FROM DR_MS_PICTURE
+		WHERE 1 = 1
+			AND MS_NUM = #{msNum}
+		LIMIT 1
+	</select>
+	
+	<insert id="insertDrMsPicture">
+		/* memberMapper.insertDrMsPicture - 회원/프로 프로필 이미지 등록 */
+		INSERT INTO DR_MS_PICTURE (
+			  MS_NUM
+			, MS_IMG_NAME
+			, MS_IMG_PATH
+		) VALUES (
+			  #{msNum}
+			, #{msImgName}
+			, #{msImgPath}
+		)
+	</insert>
+	<delete id="deleteDrMsPicture">
+		/* memberMapper.deleteDrMsPicture - 회원/프로 프로필 이미지 삭제 */
+		DELETE FROM DR_MS_PICTURE 
+		WHERE MS_NUM = #{msNum}
+	</delete>
+	<update id="updateMemberQuit" parameterType="hashmap">
+		/* memberMapper.updateMemberQuit - 회원 탈퇴 */
+		UPDATE DR_MS_MAININFO
+		   SET MS_BLANK = 'Y'
+		     , UPDATE_STAFF = 'APP'
+			 , UPDATE_DATETIME = NOW()
+			 , UPDATE_IP = #{ipAddr}
+		   WHERE MS_NUM = #{msNum}
+	</update>	
+	<update id="updateMemberToken" parameterType="hashmap">
+		/* memberMapper.updateMemberToken - 토큰 저장 */
+		UPDATE DR_MS_MAININFO
+		   SET MS_PUSH_KEY = #{token}
+		     , UPDATE_STAFF = 'APP'
+			 , UPDATE_DATETIME = NOW()
+			 , UPDATE_IP = #{ipAddr}
+		   WHERE MS_NUM = #{msNum}
+	</update>		
+	
+</mapper>

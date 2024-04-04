@@ -1,0 +1,310 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<!-- 
+ * 테이블명 : DR_BK_HISTORY
+ * 테이블 설명 : 예약내역
+-->
+<mapper namespace="com.yido.clubd.repository.DrBkHistoryMapper">
+
+	<select id="getSerialNo" resultType="String">
+		SELECT DR_NEXTVAL('001', 'B', 'BK_SERIAL_NO')
+	</select>
+	
+	<select id="selectList" parameterType="hashmap" resultType="DrBkHistory">
+		SELECT A.CO_DIV
+			 , A.BK_SERIAL_NO  
+			 , A.CALC_SERIAL_NO  
+			 , A.BK_DAY  
+			 , A.BAY_CONDI  
+			 , A.BK_TIME  
+			 , A.MS_NUM  
+			 , A.BK_NAME  
+			 , A.BK_FIRST_PHONE  
+			 , AES_DECRYPT(UNHEX(A.BK_MID_PHONE), 'YIDO') BK_MID_PHONE
+			 , A.BK_LAST_PHONE  
+			 , A.BK_STATE  
+			 , A.BK_SMS_SEND  
+			 , A.BK_PAY_DIV  
+			 , A.BK_METHOD  
+			 , A.COST_CO_DIV  
+			 , A.COST_NAME  
+			 , A.COST_CD  
+			 , A.COST_DIV  
+			 , A.BK_AMOUNT  
+			 , A.BK_DC_AMOUNT  
+			 , A.BK_REMARK  
+			 , A.INPUT_STAFF  
+			 , A.INPUT_DATETIME  
+			 , A.INPUT_IP
+		     , C.CD_TITLE1 AS BAY_NAME 
+		     , C.CD_TITLE2 AS BAY_NAME2
+		FROM DR_BK_HISTORY A 
+			INNER JOIN DR_BAY_INFO B ON A.BAY_CONDI = B.BAY_CD
+		    INNER JOIN CD_COMMON C ON B.BAY_CD = C.CD_CODE AND CD_DIVISION = '020' AND CD_USEYN = 'Y'
+		WHERE 1=1
+		<if test='coDiv != null and coDiv != ""'>
+		AND A.CO_DIV = #{coDiv}
+		</if>
+		<if test='bayCondi != null and bayCondi != ""'>
+		AND A.BAY_CONDI = #{bayCondi}
+		</if>
+		<if test='bkDay != null and bkDay != ""'>
+		AND A.BK_DAY = #{bkDay}
+		</if>
+		<if test='bkTime != null and bkTime != ""'>
+		AND A.BK_TIME = #{bkTime}
+		</if>
+		<if test='msNum != null and msNum != ""'>
+		AND A.MS_NUM = #{msNum}
+		</if>
+		<if test='bkSerialNo != null and bkSerialNo != ""'>
+		AND A.BK_SERIAL_NO = #{bkSerialNo}
+		</if>
+		<if test='bkSerialList != null'>
+		AND A.BK_SERIAL_NO IN 
+			<foreach collection="bkSerialList" item="item" index="index" separator="," open="(" close=")">
+			#{item}
+			</foreach>
+		</if>
+		<if test='calcSerialNo != null and calcSerialNo != ""'>
+		AND A.CALC_SERIAL_NO = #{calcSerialNo}
+		</if> 
+		<if test='bkState != null'>
+		AND A.BK_STATE = #{bkState}
+		</if> 
+	</select>	
+	
+	<!-- 예약내역 조회 -->
+	<select id="selectBkHis" parameterType="hashmap" resultType="hashmap">
+		SELECT B.CO_NAME
+ 			 , B.CO_DIV
+			 , D.CD_TITLE1 AS BAY_NAME
+             , C.BAY_CD
+		     , BK_DAY
+		     , GROUP_CONCAT(CONCAT(LEFT(BK_TIME, 2),':', RIGHT(BK_TIME, 2))  ORDER BY A.BK_TIME SEPARATOR ', ') AS BK_TIME
+		     , SUM(A.BK_AMOUNT) AS MN_AMOUNT 
+		     , A.BK_STATE 
+             , F.CD_TITLE1 AS BK_STATE_NAME
+    		 , COUNT(DISTINCT(H.SALE_SEQ)) AS VC_MULTI_CNT
+             , MAX(I.VC_NAME) AS VC_NAME 
+             , COUNT(G.BK_SERIAL_NO) AS VC_CNT
+             , A.CALC_SERIAL_NO
+		FROM DR_BK_HISTORY A 
+			INNER JOIN CO_PLACE B ON A.CO_DIV = B.CO_DIV
+			INNER JOIN DR_BAY_INFO C ON A.CO_DIV = C.CO_DIV AND A.BAY_CONDI = C.BAY_CD 
+		    INNER JOIN CD_COMMON D ON C.BAY_CD = D.CD_CODE AND D.CD_DIVISION = '020' AND D.CD_USEYN = 'Y'
+		    LEFT JOIN DR_BK_MN_MAP E ON A.CO_DIV = E.CO_DIV AND A.CALC_SERIAL_NO = E.BK_SERIAL_NO AND MN_AMOUNT > 0
+		    INNER JOIN CD_COMMON F ON A.CO_DIV = F.CO_DIV AND A.BK_STATE = F.CD_CODE AND F.CD_DIVISION = '015' AND F.CD_USEYN = 'Y'		    
+            LEFT JOIN DR_VOUCHER_USE G ON A.CO_DIV = G.CO_DIV AND A.BK_SERIAL_NO = G.BK_SERIAL_NO 
+            LEFT JOIN DR_VOUCHER_SALE H ON G.VC_CO_DIV = H.CO_DIV AND G.SALE_DAY = H.SALE_DAY AND G.SALE_SEQ = H.SALE_SEQ 
+            LEFT JOIN DR_VOUCHER_CODE I ON H.CO_DIV = I.CO_DIV AND H.VC_CD = I.VC_CD AND I.USE_YN = 'Y'
+		WHERE 1=1 
+		<if test='coDiv != null and coDiv != ""'>
+		 AND A.CO_DIV = #{coDiv}
+		</if>
+		<if test='msNum != null and msNum != ""'>
+		 AND A.MS_NUM = #{msNum}
+		</if>
+		<if test='calcSerialNo != null and calcSerialNo != ""'>
+		 AND A.CALC_SERIAL_NO = #{calcSerialNo}
+		</if>
+		
+		<choose> 
+			<when test='searchType != null and searchType == "1" and srchPeriod != null and srchPeriod != "" and strtDt != null and endDt != null'>
+				<!-- 전체조회 (날짜검색) -->
+			  	 AND A.BK_DAY BETWEEN #{strtDt} AND #{endDt}
+			</when> 
+			<when test='searchType != null and searchType == "2" and srchPeriod == null '>
+				<!-- 지난예약 -->
+				<![CDATA[  
+				AND DATE_FORMAT(A.BK_DAY,'%Y/%m/%d') < DATE_FORMAT(NOW(),'%Y/%m/%d')	
+				]]>
+			</when> 
+			<when test='searchType != null and searchType == "2" and srchPeriod != null and srchPeriod != "" and strtDt != null and endDt != null'>
+				<!-- 지난예약 -->
+				<![CDATA[  
+				AND DATE_FORMAT(A.BK_DAY,'%Y/%m/%d') < DATE_FORMAT(NOW(),'%Y/%m/%d')	
+				]]>
+				AND A.BK_DAY BETWEEN #{strtDt} AND #{endDt}
+			</when> 
+			<when test='searchType != null and searchType == "3" and srchPeriod == null '>
+				<!-- 예약내역 / 취소 제외 -->
+			  	AND A.BK_STATE NOT IN (3) 
+			</when> 
+			<when test='searchType != null and searchType == "3" and srchPeriod != null and srchPeriod != "" and strtDt != null and endDt != null'>
+				<!-- 예약내역 / 취소 제외 (날짜검색) -->
+			  	AND A.BK_STATE NOT IN (3) AND A.BK_DAY BETWEEN #{strtDt} AND #{endDt}
+			</when> 
+			<otherwise></otherwise>
+		</choose> 
+			
+		GROUP BY B.CO_NAME, D.CD_TITLE1, BK_DAY, A.CALC_SERIAL_NO, A.BK_STATE
+        ORDER BY A.BK_DAY DESC
+		<if test='limit != null and offset != null'>
+        LIMIT #{limit} OFFSET #{offset}
+		</if>        
+	</select>
+	
+	<select id="selectBkDetail" parameterType="hashmap" resultType="hashmap">
+		/* 예약상세 */ 
+		SELECT B.CO_NAME
+			 , B.CO_DIV
+			 , D.CD_TITLE1 AS BAY_NAME
+			 , C.BAY_CD
+			 , BK_DAY
+			 , A.BK_TIME
+		     , CONCAT(LEFT(A.BK_TIME, 2),':', RIGHT(A.BK_TIME, 2)) AS BK_TIME2
+			 , A.BK_AMOUNT 
+			 , A.BK_STATE 
+			 , F.CD_TITLE1 AS BK_STATE_NAME
+			 , I.VC_NAME
+			 , G.BK_SERIAL_NO
+			 , A.CALC_SERIAL_NO
+		     , H.SALE_DAY
+		     , H.SALE_SEQ
+     		 , G.LIST_SEQ
+		FROM DR_BK_HISTORY A 
+			INNER JOIN CO_PLACE B ON A.CO_DIV = B.CO_DIV
+			INNER JOIN DR_BAY_INFO C ON A.CO_DIV = C.CO_DIV AND A.BAY_CONDI = C.BAY_CD 
+		    INNER JOIN CD_COMMON D ON C.BAY_CD = D.CD_CODE AND D.CD_DIVISION = '020' AND D.CD_USEYN = 'Y'
+		    LEFT JOIN DR_BK_MN_MAP E ON A.CO_DIV = E.CO_DIV AND A.CALC_SERIAL_NO = E.BK_SERIAL_NO AND MN_AMOUNT > 0
+		    INNER JOIN CD_COMMON F ON A.CO_DIV = F.CO_DIV AND A.BK_STATE = F.CD_CODE AND F.CD_DIVISION = '015' AND F.CD_USEYN = 'Y'		    
+            LEFT JOIN DR_VOUCHER_USE G ON A.CO_DIV = G.CO_DIV AND A.BK_SERIAL_NO = G.BK_SERIAL_NO 
+            LEFT JOIN DR_VOUCHER_SALE H ON G.VC_CO_DIV = H.CO_DIV AND G.SALE_DAY = H.SALE_DAY AND G.SALE_SEQ = H.SALE_SEQ 
+            LEFT JOIN DR_VOUCHER_CODE I ON H.CO_DIV = I.CO_DIV AND H.VC_CD = I.VC_CD AND I.USE_YN = 'Y'
+		WHERE 1=1 
+		<if test='coDiv != null and coDiv != ""'>
+		 AND A.CO_DIV = #{coDiv}
+		</if>
+		<if test='msNum != null and msNum != ""'>
+		 AND A.MS_NUM = #{msNum}
+		</if>
+		<if test='calcSerialNo != null and calcSerialNo != ""'>
+		 AND A.CALC_SERIAL_NO = #{calcSerialNo}
+		</if>
+		<if test='bkState != null'>
+		 AND A.BK_STATE = #{bkState}
+		</if>
+
+	</select>
+	
+	
+	<!-- 예약내역 > 이용권 사용내역 -->
+	<select id="selectVoucherList" parameterType="hashmap" resultType="hashmap">
+		SELECT D.VC_CD, D.VC_NAME, COUNT(*) AS VC_CNT
+		FROM DR_BK_HISTORY A 
+			LEFT JOIN DR_VOUCHER_USE B ON A.CO_DIV = B.CO_DIV AND A.BK_SERIAL_NO = B.BK_SERIAL_NO 
+		    LEFT JOIN DR_VOUCHER_SALE C ON B.VC_CO_DIV = C.CO_DIV AND B.SALE_DAY = C.SALE_DAY AND B.SALE_SEQ = C.SALE_SEQ 
+		    LEFT JOIN DR_VOUCHER_CODE D ON C.CO_DIV = D.CO_DIV AND C.VC_CD = D.VC_CD AND D.USE_YN = 'Y' 
+			LEFT JOIN DR_VOUCHER_LIST E ON B.VC_CO_DIV = E.CO_DIV AND B.SALE_DAY = E.SALE_DAY AND B.SALE_SEQ = E.SALE_SEQ AND B.LIST_SEQ = E.LIST_SEQ 
+			WHERE 1=1 
+		<if test='coDiv != null and coDiv != ""'>
+		 AND A.CO_DIV = #{coDiv}
+		</if>
+		<if test='msNum != null and msNum != ""'>
+		 AND A.MS_NUM = #{msNum}
+		</if>
+		<if test='calcSerialNo != null and calcSerialNo != ""'>
+		 AND A.CALC_SERIAL_NO = #{calcSerialNo}
+		</if>
+		GROUP BY D.VC_CD, VC_NAME
+        ORDER BY D.VC_CD DESC   
+	</select>
+	
+	<!-- 가장 최근 대표예약고유번호 조회 (조건 : 회원번호) -->
+	<select id="selectCalcSNo" parameterType="hashmap" resultType="String">
+		SELECT CALC_SERIAL_NO
+		FROM DR_BK_HISTORY 
+		WHERE 1=1 
+		<if test='msNum != null and msNum != ""'>
+		 AND MS_NUM = #{msNum}
+		</if>
+		ORDER BY CALC_SERIAL_NO DESC
+		LIMIT 1
+	</select>
+		
+	<!-- 예약 갯수 조회 (조건 : 회원번호 & 상태 : 취소,노쇼,정산완료 아닌 것) -->
+	<select id="getBkCnt" parameterType="String" resultType="int">
+		SELECT COUNT(*) BK_CNT
+		FROM DR_BK_HISTORY
+		WHERE BK_STATE NOT IN (2,3,7) 
+		  AND BK_DAY >= DATE_FORMAT(NOW(), '%Y%m%d%H')
+		  AND MS_NUM = #{msNum}
+	</select>
+	
+    <insert id="insertDrBkHistory" parameterType="hashmap">
+    	INSERT INTO DR_BK_HISTORY (
+			BK_SERIAL_NO
+			, CO_DIV
+			, BK_DAY
+			, BAY_CONDI
+			, BK_TIME
+			, MS_NUM
+			, BK_NAME
+			, BK_FIRST_PHONE
+			, BK_MID_PHONE
+			, BK_LAST_PHONE
+			, BK_STATE
+			, BK_METHOD
+			, COST_DIV
+			, COST_CO_DIV
+			, COST_NAME
+			, COST_CD
+			, INPUT_STAFF
+			, INPUT_DATETIME
+			, INPUT_IP
+			, CALC_SERIAL_NO
+			, BK_PAY_DIV
+			, BK_AMOUNT
+    	) values (
+    		#{bkSerialNo}			
+    		, #{coDiv}		
+    		, #{bkDay}	
+    		, #{bayCondi}	
+    		, #{bkTime}		
+    		, #{msNum}		
+    		, #{bkName}	
+    		, #{bkFirstPhone}	
+    		, HEX(AES_ENCRYPT(#{bkMidPhone}, 'YIDO')) 		
+    		, #{bkLastPhone}		
+    		, #{bkState}	
+    		, 'M'			
+    		, #{costDiv}	
+    		, #{costCoDiv}	
+    		, #{costName}	
+    		, #{costCd}	
+    		, 'APP'		
+    		, now()
+			, #{ipAddr}		
+			, #{calcSerialNo}	
+			, #{bkPayDiv}		
+			, #{bkAmount}			
+    	)  	
+    </insert>
+    
+    <update id="updateBkState">
+		UPDATE DR_BK_HISTORY
+		   SET BK_STATE 	= #{bkState}
+		 WHERE BK_SERIAL_NO = #{bkSerialNo}
+	</update> 
+	    
+    <update id="updateBkAmount">
+		UPDATE DR_BK_HISTORY
+		   SET BK_AMOUNT 	= #{bkAmount}
+		 WHERE BK_SERIAL_NO = #{bkSerialNo}
+	</update>    
+	
+	
+	<select id="voucherUseCount" parameterType="hashmap" resultType="hashmap">
+		select *
+		from DR_BK_HISTORY A 
+			LEFT JOIN DR_VOUCHER_USE B ON A.BK_SERIAL_NO = B.BK_SERIAL_NO
+			LEFT JOIN DR_VOUCHER_SALE C ON B.SALE_DAY = C.SALE_DAY AND B.SALE_SEQ = C.SALE_SEQ AND USE_YN = 'Y'
+		where BK_DAY = #{bkDay} 
+		AND A.MS_NUM = #{msNum} 
+		AND A.BK_STATE IN (1, 2, 4, 5, 6, 7 )
+		AND C.VC_CD = #{vcCd} 
+
+	</select>
+</mapper>

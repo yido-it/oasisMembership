@@ -1,0 +1,409 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<!-- 
+ * 테이블명 : DR_PROMOTION, DR_PROMOTION_IMAGE, DR_PROMOTION_LIST, DR_PROMOTION_MN_MAP
+ * 테이블 설명 : 프로모션 관련 
+-->
+<mapper namespace="com.yido.clubd.repository.PromotionMapper">
+
+	<!-- 중복접수에 대한 순번 채번 -->
+	<select id="getListSeq" parameterType="hashmap" resultType="int">
+		SELECT IFNULL(MAX(LIST_SEQ), 0) + 1
+		  FROM DR_PROMOTION_LIST 
+		 WHERE 1=1
+		<if test='coDiv != null and coDiv != ""'>
+		  AND CO_DIV = #{coDiv}
+		</if> 	
+		<if test='pmDivision != null and pmDivision != ""'>
+		  AND PM_DIVISION  = #{pmDivision}
+		</if>  
+		<if test='pmSerialNo != null and pmSerialNo != ""'>
+		  AND PM_SERIAL_NO = #{pmSerialNo}
+		</if> 
+		<!-- 
+		<if test='msNum != null and msNum != ""'>
+		  AND MS_NUM = #{msNum}
+		</if>
+		 --> 		      
+    </select>
+    
+    <!-- 프로모션 신청인원 조회 -->
+	<select id="getApplyCnt" parameterType="hashmap" resultType="int">
+		SELECT COUNT(*)
+		  FROM DR_PROMOTION_LIST
+		 WHERE PM_SERIAL_NO = #{pmSerialNo}
+		   AND DEL_YN = 'N'
+    </select>
+    
+    <!-- 프로모션 신청내역조회 -->
+	<select id="getPrmList" parameterType="DrPromotionList" resultType="DrPromotionList">
+		SELECT *
+		  FROM DR_PROMOTION_LIST
+		 WHERE PM_SERIAL_NO = #{pmSerialNo}
+		   AND LIST_SEQ = #{listSeq}
+		   AND DEL_YN = 'N'
+    </select>
+	
+	
+    <!-- 프로모션 목록 -->
+	<select id="selectList" parameterType="hashmap" resultType="DrPromotion">
+		SELECT A.CO_DIV
+		 	 , A.PM_SERIAL_NO
+		     , PM_NAME
+		     , DATE_FORMAT(PM_FROM_DAY, "%m/%d") AS PM_FROM_DAY  
+		     , DATE_FORMAT(PM_END_DAY, "%m/%d") AS PM_END_DAY  
+		     , IFNULL(NULLIF(PM_CANCEL_LIMIT, ''), 0) AS PM_CANCEL_LIMIT
+		     , IFNULL(NULLIF(PM_LIMIT_COUNT, ''), 0) AS PM_LIMIT_COUNT
+		     , PM_DRINK_YN
+		     , IMG_PATH
+		     , IMG_NAME 
+   			 , D.DR_AMOUNT
+   			 , PM_SEX
+		  FROM DR_PROMOTION AS A 
+				LEFT JOIN DR_PROMOTION_IMAGE AS B ON A.PM_SERIAL_NO = B.PM_SERIAL_NO AND B.IMG_DIVISION = 1
+			    INNER JOIN DR_COST_INFO AS C ON A.CO_DIV = C.CO_DIV AND A.COST_CD = C.COST_CD AND USE_YN  = 'Y'
+			    INNER JOIN DR_COST_LIST AS D ON C.CO_DIV = D.CO_DIV AND C.COST_CD = D.COST_CD AND DISPLAY_YN = 'Y'
+	     WHERE PM_STATE = 'Y' 
+	       
+		<if test='coDiv != null and coDiv != ""'>
+		  AND A.CO_DIV = #{coDiv}
+		</if> 	 
+		<!-- 오픈되어있는 프로모션 조회   -->
+		<if test='openYn != null and openYn == "Y"'>
+		  AND DATE_FORMAT(NOW(), "%Y%m%d") BETWEEN PM_OPEN_FROM_DAY AND PM_OPEN_END_DAY
+		</if> 	 
+		<if test='mainYn != null and mainYn == "Y"'>
+		  AND PM_MAIN_YN = 'Y'
+		</if> 	 
+		<if test='subPrmSearch != null and subPrmSearch == "Y"'>
+		  AND pm_main_yn = 'N'
+		  AND pm_real_yn = 'Y'
+		  AND A.main_serial_no = #{pmSerialNo}
+		</if> 
+		<if test='mainPrmSearch != null and mainPrmSearch == "Y"'>
+		  AND pm_main_yn = 'Y'
+		  AND pm_real_yn = 'N'
+		  AND A.pm_serial_no = #{mainSerialNo}
+		</if> 		 
+		ORDER BY A.PM_SERIAL_NO
+    </select>
+     
+    <!-- 프로모션 상세 -->
+ 	<select id="getPromotion" parameterType="hashmap" resultType="DrPromotion">
+		SELECT A.CO_DIV
+		 	 , A.PM_SERIAL_NO
+		 	 , A.MAIN_SERIAL_NO
+		 	 , A.PM_DIVISION
+		     , A.PM_NAME
+		     , DATE_FORMAT(A.PM_FROM_DAY, "%y.%m.%d") AS PM_FROM_DAY  
+		     , DATE_FORMAT(A.PM_END_DAY, "%y.%m.%d") AS PM_END_DAY  
+		     , A.PM_EVENT_FROM_DAY
+		     , A.PM_EVENT_END_DAY
+		     , DATE_FORMAT(A.PM_EVENT_FROM_DAY - A.PM_CANCEL_LIMIT, "%y.%m.%d") AS CANCEL_DATE 
+		     , A.PM_CONTENT
+		     , A.PM_FORMAT 
+		     , IFNULL(NULLIF(A.PM_CANCEL_LIMIT, ''), 0) AS PM_CANCEL_LIMIT
+		     , IFNULL(NULLIF(A.PM_LIMIT_COUNT, ''), 0) AS PM_LIMIT_COUNT
+		     , A.PM_DRINK_YN
+		     , IMG_PATH
+		     , IMG_NAME 
+   			 , D.DR_AMOUNT
+   			 , A.PM_SEX
+   			 , A.PM_USE_COUNT
+   			 , A.PM_BASIC_YN
+   			 , A.PM_MAIN_YN
+   			 , A.PM_REAL_YN
+             , E.PM_NAME AS mainPmName
+		  FROM DR_PROMOTION AS A 
+				LEFT JOIN DR_PROMOTION_IMAGE AS B ON A.PM_SERIAL_NO = B.PM_SERIAL_NO AND B.IMG_DIVISION = 2
+			    INNER JOIN DR_COST_INFO AS C ON A.CO_DIV = C.CO_DIV AND A.COST_CD = C.COST_CD AND USE_YN  = 'Y'
+			    INNER JOIN DR_COST_LIST AS D ON C.CO_DIV = D.CO_DIV AND C.COST_CD = D.COST_CD AND DISPLAY_YN = 'Y'
+                LEFT JOIN DR_PROMOTION E ON A.MAIN_SERIAL_NO = E.PM_SERIAL_NO AND E.PM_STATE = 'Y' 
+		 WHERE A.PM_STATE = 'Y'
+		<if test='pmSerialNo != null and pmSerialNo != ""'>
+         AND A.PM_SERIAL_NO = #{pmSerialNo}
+		</if> 
+    </select>   
+
+	<!-- 프로모션 신청 내역 조회 -->
+	<select id="applyList" parameterType="hashmap" resultType="hashmap">
+		SELECT A.CO_DIV 
+			 , A.PM_SERIAL_NO
+			 , A.LIST_SEQ
+			 , B.PM_NAME 
+			 , C.MN_AMOUNT
+			 , MN_IN_DAY
+			 , CUSTOMER_NOTICE
+   			 , IFNULL(NULLIF(B.PM_CANCEL_LIMIT, ''), 0) AS PM_CANCEL_LIMIT
+		     , B.PM_EVENT_FROM_DAY
+		     , B.PM_EVENT_END_DAY  
+		   	 , DEL_YN
+		   	 , D.PM_NAME AS mainPmName
+   			 , B.PM_MAIN_YN
+   			 , B.PM_REAL_YN
+		  FROM DR_PROMOTION_LIST A 
+				INNER JOIN DR_PROMOTION B ON A.PM_SERIAL_NO = B.PM_SERIAL_NO AND B.PM_STATE = 'Y'
+				INNER JOIN DR_PROMOTION_MN_MAP C ON A.PM_SERIAL_NO = C.PM_SERIAL_NO AND A.LIST_SEQ = C.LIST_SEQ AND A.MS_NUM = C.MS_NUM AND MN_AMOUNT > 0
+				LEFT JOIN DR_PROMOTION D ON B.MAIN_SERIAL_NO = D.PM_SERIAL_NO AND D.PM_STATE = 'Y' 
+		 WHERE 1=1
+		<if test='msNum != null and msNum != ""'>
+		  AND A.MS_NUM = #{msNum}
+		</if> 	 
+		<if test='srchPeriod != null and srchPeriod != "" and strtDt != null and endDt != null'>
+		 AND MN_IN_DAY BETWEEN #{strtDt} AND #{endDt}
+		</if> 
+		ORDER BY B.PM_SERIAL_NO DESC, A.LIST_SEQ DESC
+		<if test='limit != null and offset != null'>
+        LIMIT #{limit} OFFSET #{offset}
+		</if>        
+    </select>
+
+	<!-- 프로모션 신청 내역 1건 -->
+	<select id="getApplyInfo" parameterType="hashmap" resultType="hashmap">
+		SELECT A.CO_DIV 
+			 , A.PM_SERIAL_NO
+			 , MAIN_SERIAL_NO
+			 , A.LIST_SEQ
+			 , PM_NAME 
+			 , C.MN_AMOUNT
+			 , MN_IN_DAY
+			 , CUSTOMER_NOTICE
+   			 , IFNULL(NULLIF(PM_CANCEL_LIMIT, ''), 0) AS PM_CANCEL_LIMIT
+		     , PM_EVENT_FROM_DAY
+		     , PM_EVENT_END_DAY  
+		   	 , DEL_YN
+   			 , PM_MAIN_YN
+   			 , PM_REAL_YN		   	 
+		  FROM DR_PROMOTION_LIST A 
+				INNER JOIN DR_PROMOTION B ON A.PM_SERIAL_NO = B.PM_SERIAL_NO AND PM_STATE = 'Y'
+				INNER JOIN DR_PROMOTION_MN_MAP C ON A.PM_SERIAL_NO = C.PM_SERIAL_NO AND A.LIST_SEQ = C.LIST_SEQ AND A.MS_NUM = C.MS_NUM AND MN_AMOUNT > 0
+		 WHERE 1=1
+		<if test='msNum != null and msNum != ""'>
+		  AND A.MS_NUM = #{msNum}
+		</if> 	 
+		<if test='srchPeriod != null and srchPeriod != "" and strtDt != null and endDt != null'>
+		 AND MN_IN_DAY BETWEEN #{strtDt} AND #{endDt}
+		</if> 
+		
+		ORDER BY A.INPUT_DATETIME DESC
+		LIMIT 1       
+    </select>
+    
+     <!-- 프로모션 입금 연결 정보 조회 -->
+	<select id="getMnMap" parameterType="PrmInfoVO" resultType="DrPromotionMnMap">
+		SELECT *
+		  FROM DR_PROMOTION_MN_MAP
+		 WHERE 1=1
+		<if test='coDiv != null and coDiv != ""'>
+		  AND CO_DIV = #{coDiv}
+		</if> 	 
+		<if test='pmSerialNo != null and pmSerialNo != ""'>
+		  AND PM_SERIAL_NO = #{pmSerialNo}
+		</if> 	 	 
+		<if test='msNum != null and msNum != ""'>
+		  AND MS_NUM = #{msNum}
+		</if> 		 
+		<if test='listSeq != null and listSeq != ""'>
+		  AND LIST_SEQ = #{listSeq}
+		</if> 	
+    </select>
+       
+	<!-- 프로모션 접수내역 insert -->
+    <insert id="insertPromotionList" parameterType="DrPromotionList">
+    	INSERT INTO DR_PROMOTION_LIST (			
+			CO_DIV
+			, PM_DIVISION
+			, PM_SERIAL_NO
+			, MS_NUM
+			, LIST_SEQ
+			, CUSTOMER_NOTICE	
+			, INPUT_STAFF
+			, INPUT_DATETIME
+			, INPUT_IP		
+			, USE_NAME
+			, REM_COUNT
+    	) values (
+    		#{coDiv}		
+    		, #{pmDivision}	
+    		, #{pmSerialNo}	
+    		, #{msNum}		
+    		, #{listSeq}		
+    		, #{customerNotice}	  
+    		, 'APP'		
+    		, now()
+			, #{inputIp}	
+			, #{useName}	
+			, #{pmRemCount}		  		
+    	)  	
+    </insert>
+    
+	<!-- 프로모션 입금 연결 정보 insert -->
+    <insert id="insertPromotionMnMap" parameterType="DrPromotionMnMap">
+    	INSERT INTO DR_PROMOTION_MN_MAP (			
+			CO_DIV
+			, PM_DIVISION
+			, PM_SERIAL_NO
+			, MS_NUM
+			, LIST_SEQ
+			, MN_IN_DAY	
+			, MN_SEQ		
+			, MN_CO_DIV		
+			, MN_AMOUNT				
+    	) values (
+    		#{coDiv}		
+    		, #{pmDivision}	
+    		, #{pmSerialNo}	
+    		, #{msNum}		
+    		, #{listSeq}	
+    		, #{mnInDay}	   
+    		, #{mnSeq}	   
+    		, #{mnCoDiv}	   
+    		, #{mnAmount}	       		
+    	)  	
+    </insert>
+    
+    <!-- 접수내역 삭제 -->
+    <update id="deletePrmList">
+		UPDATE DR_PROMOTION_LIST
+		   SET DEL_YN 			= 'Y' 
+		 WHERE CO_DIV 			= #{coDiv}
+		   AND PM_SERIAL_NO 	= #{pmSerialNo}
+		   AND MS_NUM 			= #{msNum}
+		   AND LIST_SEQ 		= #{listSeq}
+	</update>
+	 
+	<!-- 프로모션 선점 테이블에서 신청 가능한 데이터 조회하기 -->
+  	<select id="selectAvailableData" parameterType="PrmInfoVO" resultType="DrPromotionMark">
+ 		SELECT *
+		 FROM DR_PROMOTION_MARK
+		WHERE 1=1
+		AND MARK_STATE = 'Y' AND (ENTRY_DATETIME IS NULL OR ENTRY_DATETIME = '') 		
+		<if test='coDiv != null and coDiv != ""'>
+		AND CO_DIV = #{coDiv} 
+		</if>	
+		<if test='pmSerialNo != null and pmSerialNo != ""'>
+		AND PM_SERIAL_NO = #{pmSerialNo} 
+		</if>	
+
+		ORDER BY MARK_SEQ 
+    </select>
+    
+	<!-- 프로모션 선점 처리 -->
+    <insert id="updatePrmMark1" parameterType="hashmap">
+    	UPDATE DR_PROMOTION_MARK
+		   SET ENTRY_USER 		= #{updMsId}
+			 , ENTRY_IP 		= #{ipAddr}
+			 , ENTRY_DATETIME	= DATE_ADD(NOW(), INTERVAL #{entryTime} MINUTE)
+			 , MS_NUM			= #{msNum}
+			 , MARK_STATE		= 'N'
+		 WHERE CO_DIV 			= #{coDiv}
+		   AND PM_SERIAL_NO 	= #{pmSerialNo}
+		   AND PM_DIVISION 		= #{pmDivision}
+		   AND MARK_SEQ 		= #{markSeq}
+		<if test='stateIsYn != null and stateIsYn == "Y"'>
+		   AND MARK_STATE 		= #{stateIsYn}
+		</if>
+    </insert>
+	
+    <!--  선점테이블 데이터 변경 (신청완료되었을때)-->
+    <update id="updatePrmMark2" parameterType="PrmInfoVO">
+    	UPDATE DR_PROMOTION_MARK
+    	   SET PM_SERIAL_NO 	= PM_SERIAL_NO
+	    	<if test='listSeq != null'>
+			, LIST_SEQ 			= #{listSeq}
+			</if>	
+	    	<if test='msNum != null'>
+			, MS_NUM 			= #{msNum}
+			</if>	
+		 WHERE CO_DIV 			= #{coDiv}
+		   AND PM_SERIAL_NO 	= #{pmSerialNo}
+		<if test='markSeq != null and markSeq != ""'>
+		   AND MARK_SEQ 		= #{markSeq} 
+		</if>	 
+		<if test='entryUser != null and entryUser != ""'>
+		   AND ENTRY_USER 		= #{entryUser} 
+		</if>
+    </update>
+    
+    <!-- 선점해제 -->
+    <update id="updatePrmUnMark" parameterType="PrmInfoVO">
+    	UPDATE DR_PROMOTION_MARK
+    	   SET ENTRY_USER 		= NULL
+			 , ENTRY_IP 		= NULL
+			 , ENTRY_DATETIME	= NULL
+			 , MS_NUM			= NULL
+			 , LIST_SEQ			= NULL
+			 , MARK_STATE		= 'Y'
+		 WHERE CO_DIV 			= #{coDiv}
+		   AND PM_SERIAL_NO 	= #{pmSerialNo}
+		   AND MARK_SEQ 		= #{markSeq} 
+		   AND ENTRY_USER 		= #{entryUser} 
+		<if test='listSeq != null and listSeq != ""'>
+		   AND LIST_SEQ 		= #{listSeq}
+		</if>
+    </update>
+    
+	<!-- 프로모션 선점 테이블  조회 -->
+  	<select id="selectMarkList" parameterType="PrmInfoVO" resultType="DrPromotionMark">
+ 		SELECT *
+		 FROM DR_PROMOTION_MARK
+		WHERE 1=1
+		<if test='coDiv != null and coDiv != ""'>
+		AND CO_DIV = #{coDiv} 
+		</if>	
+		<if test='pmSerialNo != null and pmSerialNo != ""'>
+		AND PM_SERIAL_NO = #{pmSerialNo} 
+		</if>	
+		<if test='pmDivision != null and pmDivision != ""'>
+		AND PM_DIVISION = #{pmDivision} 
+		</if>	
+		<if test='msId != null and msId != ""'>
+		AND ENTRY_USER = #{msId} 
+		</if>	
+		<if test='markState != null and markState != ""'>
+		AND MARK_STATE = #{markState} 
+		</if>	
+		<if test='markSeq != null and markSeq != ""'>
+		AND MARK_SEQ = #{markSeq} 
+		</if>	
+		<if test='listSeq != null and listSeq != ""'>
+		AND LIST_SEQ = #{listSeq} 
+		</if>	
+		<if test='ipAddr != null and ipAddr != ""'>
+		AND ENTRY_IP = #{ipAddr} 
+		</if>
+		<if test='isMarkChk != null and isMarkChk == "Y"'>
+		AND LIST_SEQ IS NULL AND ENTRY_DATETIME IS NOT NULL
+		</if>	   	   
+		ORDER BY ENTRY_DATETIME DESC
+    </select>
+    
+    <!-- 신청내역 MARK_SEQ 변경 -->
+    <update id="updatePrmList" parameterType="PrmInfoVO">
+    	UPDATE DR_PROMOTION_LIST
+    	   SET MARK_SEQ 		= #{markSeq}
+		 WHERE CO_DIV 			= #{coDiv}
+		   AND PM_DIVISION 		= #{pmDivision}
+		   AND PM_SERIAL_NO 	= #{pmSerialNo}
+		   AND MS_NUM 			= #{msNum}
+		   AND LIST_SEQ 		= #{listSeq}
+		   AND DEL_YN 			= 'N'
+    </update>
+    
+    <!-- 수량 변경 ( DR_PROMOTION :: PM_ACCEPT_COUNT ) -->
+    <update id="updRemCount" parameterType="hashmap">
+    	UPDATE DR_PROMOTION
+    	   SET PM_DIVISION = PM_DIVISION
+	 		<if test='minusRemCnt != null and minusRemCnt == "Y"'>
+			 , PM_ACCEPT_COUNT	= PM_ACCEPT_COUNT - 1
+			</if>	
+	 		<if test='addRemCnt != null and addRemCnt == "Y"'>
+			, PM_ACCEPT_COUNT	= PM_ACCEPT_COUNT + 1
+			</if>	   	 
+		 WHERE CO_DIV 			= #{coDiv}
+		   AND PM_DIVISION 		= #{pmDivision}
+		   AND PM_SERIAL_NO 	= #{pmSerialNo}
+    </update>
+
+</mapper>

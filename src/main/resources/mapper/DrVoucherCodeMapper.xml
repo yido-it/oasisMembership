@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<!-- 
+ * 테이블명 : DR_VOUCHER_CODE
+ * 테이블 설명 : 이용권코드
+-->
+<mapper namespace="com.yido.clubd.repository.DrVoucherCodeMapper">
+
+	<select id="selectList" resultType="DrVoucherCode">
+		SELECT A.VC_CD
+			 , A.VC_NAME
+			 , B.VC_AMOUNT
+ 			 , A.VC_MONTH
+			 , DATE_FORMAT(NOW(), "%Y-%m-%d") AS NOW_DT
+			 , DATE_FORMAT(DATE_ADD(NOW(), INTERVAL A.VC_MONTH MONTH), "%Y-%m-%d") AS END_DT
+			 , B.VC_NET
+			 , B.VC_VAT
+			 , A.VC_LIMIT_CNT
+             , A.VC_SERVICE_CNT
+			 , A.VC_DIVISION
+	     FROM DR_VOUCHER_CODE A 
+						     INNER JOIN (
+								SELECT CO_DIV, VC_CD, MAX(COST_DAY) AS COST_DAY, MAX(VC_AMOUNT)  AS VC_AMOUNT, MAX(VC_NET)  AS VC_NET, MAX(VC_VAT)  AS VC_VAT
+						        FROM DR_VOUCHER_COST  
+						        WHERE USE_YN = 'Y'
+						        GROUP BY CO_DIV, VC_CD
+							) B ON A.CO_DIV = B.CO_DIV AND A.VC_CD = B.VC_CD 
+		 WHERE A.VC_DISPLAY_YN = 'Y'
+		<if test='coDiv != null and coDiv != ""'>
+		  AND A.CO_DIV = #{coDiv}
+		</if> 
+		<if test='vcCd != null and vcCd != ""'>
+		  AND A.VC_CD = #{vcCd}
+		</if> 
+		
+		<choose> 
+			<when test='msDivision != null and msDivision == "00"'>
+				<!-- 프로 -->
+			  	 AND (VC_SALE = '00' OR VC_SALE = '%')
+			</when> 
+			<when test='msDivision != null and msDivision == "01"'>
+				<!-- 회원 -->
+			  	 AND (VC_SALE = '01' OR VC_SALE = '%')
+			</when> 
+		
+			<otherwise></otherwise>
+		</choose> 
+		
+		ORDER BY VC_SORT
+    </select>
+
+</mapper>

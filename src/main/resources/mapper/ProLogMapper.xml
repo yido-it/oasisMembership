@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<!-- 
+ * 테이블명 : PRO_NOTICE_LOG
+ * 테이블 설명 : 레슨프로특이사항 로그
+-->
+<mapper namespace="com.yido.clubd.repository.ProLogMapper">
+   
+    <insert id="insertProNoticeLog">
+        <selectKey resultType="Integer" keyProperty="logSeq" order="BEFORE">
+			SELECT IFNULL(CAST(MAX(LOG_SEQ) AS UNSIGNED), 0)+1 
+			  FROM PRO_NOTICE_LOG
+        </selectKey>    
+    	INSERT INTO PRO_NOTICE_LOG (
+			  MS_NUM
+			, NOTICE_DIV
+			, LOG_SEQ
+			, LOG_DIV
+			, PRO_MUST_YN
+			, PRO_REMARK
+			, NOTICE_OPEN_YN
+			, INPUT_STAFF
+			, INPUT_DATETIME
+			, INPUT_IP
+	
+    	) values (
+    		  #{msNum}
+			, #{noticeDiv}
+			, #{logSeq}
+			, #{logDiv}
+			, 'N'	
+			, #{proRemark}
+			, #{noticeOpenYn}
+			, #{inputStaff}
+			, NOW()
+			, #{inputIp}
+    	)  	
+    </insert>    
+    <insert id="insertProLicenseLog">
+        <selectKey resultType="Integer" keyProperty="logSeq" order="BEFORE">
+			SELECT IFNULL(CAST(MAX(LOG_SEQ) AS UNSIGNED), 0)+1 
+			  FROM PRO_LICENSE_LOG
+        </selectKey>    
+    	INSERT INTO PRO_LICENSE_LOG (
+			  MS_NUM
+			, LIC_SEQ
+			, LOG_SEQ
+			, LOG_DIV
+			, LIC_KIND
+			, LIC_REMARK
+			, LIC_OPEN_YN
+			, INPUT_STAFF
+			, INPUT_DATETIME
+			, INPUT_IP
+
+    	) values (
+    		  #{msNum}
+			, #{licSeq}
+			, #{logSeq}
+			, #{logDiv}
+			, #{licKind}
+			, #{licRemark}
+			, #{licOpenYn}
+			, #{inputStaff}
+			, NOW()
+			, #{inputIp}
+
+    	)  	
+    </insert>
+    
+</mapper>

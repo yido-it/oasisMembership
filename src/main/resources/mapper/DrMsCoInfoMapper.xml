@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<!-- 
+ * 테이블명 : DR_MS_CO_INFO
+ * 테이블 설명 : 회원지점연결정보
+-->
+<mapper namespace="com.yido.clubd.repository.DrMsCoInfoMapper">
+	<select id="selectDrMsCoInfo" resultType="DrMsCoInfo" parameterType="Map">
+	/* drMsCoInfoMapper.selectDrMsCoInfo - 사용자 DR_MS_CO_INFO 데이터 유무 조회 */
+    	SELECT
+    		  CO_DIV
+    		, MS_NUM
+    		, MS_REGISTER
+    		, MS_FIRST_PICK
+    		, USE_YN
+    		, LESSON_WEEK_CNT
+    		, LESSON_OUTDOOR
+    	FROM DR_MS_CO_INFO
+    	WHERE 1 = 1
+    		AND CO_DIV = #{coDiv}
+    		AND MS_NUM = #{msNum}
+    </select>
+    <select id="selectFirstPick" resultType="DrMsCoInfo" parameterType="String">
+    /* drMsCoInfoMapper.selectFirstPick - 사용자 선호업장 조회 */
+    	SELECT
+    		  CO_DIV
+    		, MS_NUM
+    		, MS_REGISTER
+    		, MS_FIRST_PICK
+    		, USE_YN
+    		, LESSON_WEEK_CNT
+    		, LESSON_OUTDOOR
+    	FROM DR_MS_CO_INFO
+    	WHERE 1 = 1
+    		AND MS_NUM = #{msNum}
+    		AND MS_FIRST_PICK = 'Y'
+    	LIMIT 1
+    </select>
+    <insert id="insertDrMsCoInfo">
+    /* drMsCoInfoMapper.insertDrMsCoInfo - DR_MS_CO_INFO 사업장 최초 등록 */
+    	INSERT INTO DR_MS_CO_INFO (
+    		  CO_DIV
+    		, MS_NUM
+    		, MS_REGISTER
+    		, MS_FIRST_PICK
+    		, USE_YN
+    		, LESSON_WEEK_CNT
+    		, LESSON_OUTDOOR
+    	)VALUES (
+    		  #{coDiv}
+    		, #{msNum}
+    		, 'Y'
+    		, #{msFirstPick}
+    		, 'Y'
+    		, 0
+    		, NULL
+    	)
+    </insert>
+    <update id="updateFirstPickYN">
+    /* drMsCoInfoMapper.updateFirstPickYN - 선호업장으로 체크 */
+    	UPDATE DR_MS_CO_INFO
+    		SET MS_FIRST_PICK = #{msFirstPick}
+		 WHERE 1 = 1
+		 	AND MS_NUM = #{msNum}
+		 	<if test='msFirstPick == "Y"'>
+		 	AND CO_DIV = #{coDiv}
+		 	</if>
+    </update>  
+</mapper>

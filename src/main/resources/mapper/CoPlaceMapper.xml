@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<!-- 
+ * 테이블명 : CO_PLACE
+ * 테이블 설명 : 지점코드
+-->
+<mapper namespace="com.yido.clubd.repository.CoPlaceMapper">
+
+	<select id="selectList" parameterType="hashmap" resultType="CoPlace">
+       SELECT * 
+       FROM CO_PLACE
+       WHERE 1=1
+		<if test='coDiv != null and coDiv != ""'>
+		AND CO_DIV = #{coDiv}
+		</if>       
+		AND USE_YN = 'Y'
+    </select>
+    <select id="selectPlaceList" resultType="CoPlace">
+    	/* coPlaceMapper.selectPlaceList - 전체 리스트 조회 */
+		SELECT *
+		  FROM CO_PLACE
+		 WHERE USE_YN = 'Y'
+		<if test='coDiv != null and coDiv != ""'>
+		  AND CO_DIV = #{coDiv}
+		</if> 	  
+		<if test='cdDivision != null and cdDivision != ""'>
+		  AND CD_DIVISION = #{cdDivision}
+		</if> 	 
+		<if test='cdCode != null and cdCode != ""'>
+		  AND CD_CODE = #{cdCode}
+		</if> 			   
+	</select>
+</mapper>

@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<!-- 
+ * 테이블명 : DR_MS_CO_INFO_LOG
+ * 테이블 설명 : 회원지점연결정보 로그
+-->
+<mapper namespace="com.yido.clubd.repository.DrMsCoInfoLogMapper">
+<insert id="insertDrMsCoInfoLog">
+	/* memberLogMapper.insertDrMsCoInfoLog */
+		<selectKey resultType="Integer" keyProperty="logSeq" order="BEFORE">
+			SELECT IFNULL(CAST(MAX(LOG_SEQ) AS UNSIGNED), 0)+1 as logSeq
+			  FROM DR_MS_CO_INFO_LOG
+			WHERE MS_NUM = #{msNum}
+        </selectKey> 
+		INSERT INTO DR_MS_CO_INFO_LOG (
+		  	  CO_DIV
+			, MS_NUM
+			, LOG_SEQ
+			, LOG_DIV
+			, MS_REGISTER
+			, MS_FIRST_PICK
+			, USE_YN
+			, MS_VOUCHER_DAY
+			, LESSON_WEEK_CNT
+			, LESSON_OUTDOOR
+			, INPUT_STAFF
+			, INPUT_DATETIME
+			, INPUT_IP
+		) 
+			SELECT
+				  CO_DIV
+				, MS_NUM
+				, #{logSeq}
+				, #{logDiv}
+				, MS_REGISTER
+				, MS_FIRST_PICK
+				, USE_YN
+				, MS_VOUCHER_DAY
+				, LESSON_WEEK_CNT
+				, LESSON_OUTDOOR
+				, #{inputStaff}
+				, NOW()
+				, #{inputIp}
+			FROM DR_MS_CO_INFO
+			WHERE 1 = 1
+				AND CO_DIV = #{coDiv}
+				AND MS_NUM = #{msNum}
+			LIMIT 1
+    </insert>    
+</mapper>
